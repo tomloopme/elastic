@@ -2,19 +2,12 @@
 #'
 #' @export
 #'
-#' @param conn an Elasticsearch connection object, see [connect()]
 #' @param index (character) A character vector of index names
 #' @param body Query, either a list or json.
-#' @param ... Curl options passed on to [crul::HttpClient]
-#' 
-#' @references 
-#' https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-tokenizers.html
+#' @param ... Curl options passed on to \code{\link[httr]{PUT}}
 #'
 #' @author Scott Chamberlain <myrmecocystus@@gmail.com>
 #' @examples \dontrun{
-#' # connection setup
-#' (x <- connect())
-#' 
 #' # set tokenizer
 #'
 #' ## NGram tokenizer
@@ -43,19 +36,18 @@
 #'   analyzer='my_ngram_analyzer')
 #' }
 
-tokenizer_set <- function(conn, index, body, ...) {
-  is_conn(conn)
+tokenizer_set <- function(index, body, ...) {
   if (length(index) > 1) stop("Only one index allowed", call. = FALSE)
-  url <- conn$make_url()
+  url <- make_url(es_get_auth())
   url <- sprintf("%s/%s", url, esc(index))
-  tokenizer_PUT(conn, url, body, ...)
+  tokenizer_PUT(url, body, ...)
 }
 
-tokenizer_PUT <- function(conn, url, body, ...){
+tokenizer_PUT <- function(url, body, ...){
   body <- check_inputs(body)
-  out <- conn$make_conn(url, json_type(), ...)$put(
-    body = body, encode = "json")
-  if (out$status_code > 202) geterror(conn, out)
-  if (conn$warn) catch_warnings(out)
-  jsonlite::fromJSON(out$parse('UTF-8'))
+  out <- PUT(url, make_up(), es_env$headers, content_type_json(), 
+             ..., body = body, encode = "json")
+  if (out$status_code > 202) geterror(out)
+  tt <- cont_utf8(out)
+  jsonlite::fromJSON(tt)
 }

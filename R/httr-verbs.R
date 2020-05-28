@@ -1,7 +1,7 @@
 # GET wrapper
-es_GET <- function(conn, path, index=NULL, type=NULL, metric=NULL, node=NULL,
+es_GET <- function(path, index=NULL, type=NULL, metric=NULL, node=NULL,
                         clazz=NULL, raw, callopts=list(), ...){
-  url <- conn$make_url()
+  url <- make_url(es_get_auth())
   index <- esc(index)
   type <- esc(type)
   if (is.null(index) && is.null(type)) {
@@ -23,15 +23,9 @@ es_GET <- function(conn, path, index=NULL, type=NULL, metric=NULL, node=NULL,
 
   args <- ec(list(...))
   if (length(args) == 0) args <- NULL
-  cli <- crul::HttpClient$new(url = url,
-    headers = conn$headers, 
-    opts = c(conn$opts, callopts),
-    auth = crul::auth(conn$user, conn$pwd)
-  )
-  tt <- cli$get(query = args)
-  geterror(conn, tt)
-  if (conn$warn) catch_warnings(tt)
-  res <- tt$parse("UTF-8")
+  tt <- GET(url, query = args, c(es_env$headers, mc(make_up(), callopts)))
+  geterror(tt)
+  res <- cont_utf8(tt)
   if (!is.null(clazz)) {
     class(res) <- clazz
     if (raw) res else es_parse(res)
@@ -50,31 +44,38 @@ mc <- function(...) {
   }
 }
 
-index_GET <- function(conn, index, features, raw, ...) {
-  url <- conn$make_url()
+index_GET <- function(index, features, raw, ...) {
+  url <- make_url(es_get_auth())
   url <- paste0(url, "/", paste0(esc(index), collapse = ","))
   if (!is.null(features)) features <- paste0(paste0("_", features), collapse = ",")
   if (!is.null(features)) url <- paste0(url, "/", features)
-  tt <- crul::HttpClient$new(url = url, headers = conn$headers, 
-    opts = c(conn$opts, ...), auth = crul::auth(conn$user, conn$pwd)
-  )$get()
-  if (tt$status_code > 202) geterror(conn, tt)
-  if (conn$warn) catch_warnings(tt)
-  jsonlite::fromJSON(tt$parse('UTF-8'), FALSE)
+  tt <- GET(url, make_up(), es_env$headers, ...)
+  if (tt$status_code > 202) geterror(tt)
+  jsonlite::fromJSON(cont_utf8(tt), FALSE)
 }
 
-es_POST <- function(conn, path, index=NULL, type=NULL, clazz=NULL, raw, 
-  callopts, query, args, ...) {
+es_POST <- function(path, index=NULL, type=NULL, clazz=NULL, raw, callopts, query, ...) {
+  url <- make_url(es_get_auth())
+  index <- esc(index)
+  type <- esc(type)
+  if (is.null(index) && is.null(type)) {
+    url <- paste(url, path, sep = "/")
+  } else {
+    if (is.null(type) && !is.null(index)) {
+      url <- paste(url, index, path, sep = "/")
+    } else {
+      url <- paste(url, index, type, path, sep = "/")
+    }
+  }
 
-  url <- construct_url(conn$make_url(), path, cl(index), cl(type))
-  url <- prune_trailing_slash(url)
-  body <- check_inputs(query)
-  if (length(body) == 0) body <- NULL
-  cli <- conn$make_conn(url, json_type(), ...)
-  tt <- cli$post(body = body, query = args, encode = "json")
-  if (conn$warn) catch_warnings(tt)
-  geterror(conn, tt)
-  res <- tt$parse("UTF-8")
+  args <- check_inputs(query)
+  if (length(args) == 0) args <- NULL
+
+  tt <- POST(url, body = args, content_type_json(),
+             c(es_env$headers, mc(make_up(), callopts)), 
+             encode = "json")
+  geterror(tt)
+  res <- cont_utf8(tt)
   if (!is.null(clazz)) {
     class(res) <- clazz
     if (raw) res else es_parse(input = res)
@@ -83,29 +84,25 @@ es_POST <- function(conn, path, index=NULL, type=NULL, clazz=NULL, raw,
   }
 }
 
-es_DELETE <- function(conn, url, query = NULL, ...) {
-  cli <- conn$make_conn(url, ...)
-  tt <- cli$delete(query = query)
-  geterror(conn, tt)
-  if (conn$warn) catch_warnings(tt)
-  jsonlite::fromJSON(tt$parse("UTF-8"), FALSE)
+es_DELETE <- function(url, query = NULL, ...) {
+  tt <- DELETE(url, query = query, c(make_up(), es_env$headers, ...))
+  geterror(tt)
+  jsonlite::fromJSON(cont_utf8(tt), FALSE)
 }
 
-es_PUT <- function(conn, url, body = list(), args = list(), ...) {
+es_PUT <- function(url, body = list(), args = list(), ...) {
   body <- check_inputs(body)
-  cli <- conn$make_conn(url, headers = json_type(), ...)
-  tt <- cli$put(body = body, query = args, encode = "json")
-  geterror(conn, tt)
-  if (conn$warn) catch_warnings(tt)
-  jsonlite::fromJSON(tt$parse("UTF-8"), FALSE)
+  tt <- PUT(url, body = body, query = args, 
+            encode = 'json', content_type_json(),
+            make_up(), es_env$headers, ...)
+  geterror(tt)
+  jsonlite::fromJSON(cont_utf8(tt), FALSE)
 }
 
-es_GET_ <- function(conn, url, query = NULL, ...) {
-  cli <- conn$make_conn(url, list(), ...)
-  tt <- cli$get(query = query)
-  if (conn$warn) catch_warnings(tt)
-  geterror(conn, tt)
-  jsonlite::fromJSON(tt$parse('UTF-8'), FALSE)
+es_GET_ <- function(url, query = NULL, ...) {
+  tt <- GET(url, query = query, make_up(), es_env$headers, ...)
+  geterror(tt)
+  jsonlite::fromJSON(cont_utf8(tt), FALSE)
 }
 
 check_inputs <- function(x) {
@@ -125,40 +122,45 @@ check_inputs <- function(x) {
   }
 }
 
-geterror <- function(conn, z) {
-  if (!inherits(z, "HttpResponse")) stop("Input to error parser must be a HttpResponse object")
+geterror <- function(z) {
+  if (!inherits(z, "response")) stop("Input to error parser must be a httr response object")
   if (z$status_code > 202) {
-    err <- tryCatch(z$parse("UTF-8"), error = function(e) e)
-    err <- if (inherits(err, "simpleError")) jsonlite::fromJSON(z$parse("UTF-8"), FALSE) else err
-    if (!inherits(err, "simpleError")) {
-      if (nchar(z$parse("UTF-8")) == 0) {
-        stop(z$status_http()$message, call. = FALSE)
-      }
-      err <- tryCatch(
-        jsonlite::fromJSON(err, 
-                           simplifyVector = FALSE, 
-                           simplifyDataFrame = FALSE), error = function(e) e)
-      if (inherits(err, "error")) {
-        msg <- z$status_http()$message
-        stop(msg, call. = FALSE)
-      }
-      
-      if (conn$errors == "complete") {
-        stop(z$status_code, " - ", pluck_reason(err),
-             "\nES stack trace:\n",
-             pluck_trace(err), call. = FALSE)
-      } else {
-        msg <- tryCatch(err$error$reason, error = function(e) e)
-        if (inherits(msg, "simpleError") || is.null(msg)) {
-          msg <- tryCatch(err$error, error = function(e) e)
-          if (inherits(msg, "simpleError") || is.null(msg)) {
-            msg <- z$status_http()$message
-          }
+    if (is.null(z$headers$statusmessage)) {
+      err <- tryCatch(cont_utf8(z), error = function(e) e)
+      err <- if (inherits(err, "simpleError")) jsonlite::fromJSON(cont_utf8(z), FALSE) else err
+      if (!inherits(err, "simpleError")) {
+        if (nchar(cont_utf8(z)) == 0) {
+          stop(http_status(z)$message, call. = FALSE)
         }
-        stop(z$status_code, " - ", msg, call. = FALSE)
+        err <- tryCatch(
+          jsonlite::fromJSON(err, 
+                             simplifyVector = FALSE, 
+                             simplifyDataFrame = FALSE), error = function(e) e)
+        if (inherits(err, "error")) {
+          msg <- httr::http_status(z)$message
+          stop(msg, call. = FALSE)
+        }
+        
+        erropt <- Sys.getenv("ELASTIC_RCLIENT_ERRORS")
+        if (erropt == "complete") {
+          stop(z$status_code, " - ", pluck_reason(err),
+               "\nES stack trace:\n",
+               pluck_trace(err), call. = FALSE)
+        } else {
+          msg <- tryCatch(err$error$reason, error = function(e) e)
+          if (inherits(msg, "simpleError") || is.null(msg)) {
+            msg <- tryCatch(err$error, error = function(e) e)
+            if (inherits(msg, "simpleError") || is.null(msg)) {
+              msg <- httr::http_status(z)$message
+            }
+          }
+          stop(z$status_code, " - ", msg, call. = FALSE)
+        }
+      } else {
+        stop("error", call. = FALSE)
       }
     } else {
-      stop("error", call. = FALSE)
+      z$headers$statusmessage
     }
   }
 }

@@ -8,59 +8,46 @@
 \alias{index_template_delete}
 \title{Index templates}
 \usage{
-index_template_put(
-  conn,
-  name,
-  body = NULL,
-  create = NULL,
-  flat_settings = NULL,
-  master_timeout = NULL,
-  order = NULL,
-  timeout = NULL,
-  ...
-)
+index_template_put(name, body = NULL, create = NULL, flat_settings = NULL,
+  master_timeout = NULL, order = NULL, timeout = NULL, ...)
 
-index_template_get(conn, name = NULL, filter_path = NULL, ...)
+index_template_get(name = NULL, filter_path = NULL, ...)
 
-index_template_exists(conn, name, ...)
+index_template_exists(name, ...)
 
-index_template_delete(conn, name, ...)
+index_template_delete(name, ...)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{name}{(character) The name of the template}
 
 \item{body}{(character/list) The template definition}
 
-\item{create}{(logical) Whether the index template should only be added
+\item{create}{(logical) Whether the index template should only be added 
 if new or can also replace an existing one. Default: \code{FALSE}}
 
-\item{flat_settings}{(logical) Return settings in flat format.
+\item{flat_settings}{(logical) Return settings in flat format. 
 Default: \code{FALSE}}
 
 \item{master_timeout}{(integer) Specify timeout for connection to master}
 
-\item{order}{(integer) The order for this template when merging
-multiple matching ones (higher numbers are merged later, overriding the
+\item{order}{(integer) The order for this template when merging 
+multiple matching ones (higher numbers are merged later, overriding the 
 lower numbers)}
 
 \item{timeout}{(integer) Explicit operation timeout}
 
-\item{...}{Curl options. Or in \code{percolate_list} function, further
-args passed on to \code{\link[=Search]{Search()}}}
+\item{...}{Curl options. Or in \code{percolate_list} function, further 
+args passed on to \code{\link{Search}}}
 
-\item{filter_path}{(character) a regex for filtering output path,
+\item{filter_path}{(character) a regex for filtering output path, 
 see example}
 }
 \description{
-Index templates allow you to define templates that
+Index templates allow you to define templates that 
 will automatically be applied when new indices are created
 }
 \examples{
 \dontrun{
-(x <- connect())
-
 body <- '{
   "template": "te*",
   "settings": {
@@ -83,23 +70,23 @@ body <- '{
     }
   }
 }'
-index_template_put(x, "template_1", body = body)
+index_template_put("template_1", body = body)
 
 # get templates
-index_template_get(x)
-index_template_get(x, "template_1")
-index_template_get(x, c("template_1", "template_2"))
-index_template_get(x, "template_*")
+index_template_get()
+index_template_get("template_1")
+index_template_get(c("template_1", "template_2"))
+index_template_get("template_*")
 ## filter path
-index_template_get(x, "template_1", filter_path = "*.template")
+index_template_get("template_1", filter_path = "*.template")
 
 # template exists
-index_template_exists(x, "template_1")
-index_template_exists(x, "foobar")
+index_template_exists("template_1")
+index_template_exists("foobar")
 
 # delete a template
-index_template_delete(x, "template_1")
-index_template_exists(x, "template_1")
+index_template_delete("template_1")
+index_template_exists("template_1")
 }
 }
 \references{

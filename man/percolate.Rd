@@ -9,46 +9,26 @@
 \alias{percolate_delete}
 \title{Percolater}
 \usage{
-percolate_register(
-  conn,
-  index,
-  id,
-  type = NULL,
-  body = list(),
-  routing = NULL,
-  preference = NULL,
-  ignore_unavailable = NULL,
-  percolate_format = NULL,
-  refresh = NULL,
-  ...
-)
+percolate_register(index, type = NULL, id, body = list(), routing = NULL,
+  preference = NULL, ignore_unavailable = NULL, percolate_format = NULL,
+  refresh = NULL, ...)
 
-percolate_match(
-  conn,
-  index,
-  type = NULL,
-  body,
-  routing = NULL,
-  preference = NULL,
-  ignore_unavailable = NULL,
-  percolate_format = NULL,
-  ...
-)
+percolate_match(index, type = NULL, body, routing = NULL,
+  preference = NULL, ignore_unavailable = NULL, percolate_format = NULL,
+  ...)
 
-percolate_list(conn, index, ...)
+percolate_list(index, ...)
 
-percolate_count(conn, index, type, body, ...)
+percolate_count(index, type, body, ...)
 
-percolate_delete(conn, index, id, ...)
+percolate_delete(index, id)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{index}{Index name. Required}
 
-\item{id}{A precolator id. Required}
+\item{type}{Document type}
 
-\item{type}{Document type. Required}
+\item{id}{A precolator id. Required}
 
 \item{body}{Body json, or R list.}
 
@@ -72,13 +52,13 @@ the client. Obviously if there are two percolator queries with same id from diff
 indices there is no way to find out which percolator query belongs to what index. Any
 other value to percolate_format will be ignored.}
 
-\item{refresh}{If \code{TRUE} then refresh the affected shards to make this
-operation visible to search, if "wait_for" then wait for a refresh to
-make this operation visible to search, if \code{FALSE} (default) then do
+\item{refresh}{If \code{TRUE} then refresh the affected shards to make this 
+operation visible to search, if "wait_for" then wait for a refresh to 
+make this operation visible to search, if \code{FALSE} (default) then do 
 nothing with refreshes. Valid choices: \code{TRUE}, \code{FALSE}, "wait_for"}
 
 \item{...}{Curl options. Or in \code{percolate_list} function, further args
-passed on to \code{\link[=Search]{Search()}}}
+passed on to \code{\link{Search}}}
 }
 \description{
 Store queries into an index then, via the percolate API, define
@@ -88,38 +68,38 @@ documents to retrieve these queries.
 Additional body options, pass those in the body. These aren't query string
 parameters:
 \itemize{
-\item filter - Reduces the number queries to execute during percolating. Only the
-percolator queries that match with the filter will be included in the percolate
-execution. The filter option works in near realtime, so a refresh needs to have
-occurred for the filter to included the latest percolate queries.
-\item query - Same as the filter option, but also the score is computed. The
-computed scores can then be used by the track_scores and sort option.
-\item size - Defines to maximum number of matches (percolate queries) to be returned.
-Defaults to unlimited.
-\item track_scores - Whether the _score is included for each match. The _score is
-based on the query and represents how the query matched the percolate query's
-metadata, not how the document (that is being percolated) matched the query. The query
-option is required for this option. Defaults to false.
-\item sort - Define a sort specification like in the search API. Currently only
-sorting _score reverse (default relevancy) is supported. Other sort fields will
-throw an exception. The size and query option are required for this setting. Like
-track_score the score is based on the query and represents how the query matched
-to the percolate query's metadata and not how the document being percolated matched
-to the query.
-\item aggs - Allows aggregation definitions to be included. The aggregations are
-based on the matching percolator queries, look at the aggregation documentation on
-how to define aggregations.
-\item highlight - Allows highlight definitions to be included. The document being
-percolated is being highlight for each matching query. This allows you to see how
-each match is highlighting the document being percolated. See highlight documentation
-on how to define highlights. The size option is required for highlighting, the
-performance of highlighting in the percolate API depends of how many matches are
-being highlighted.
+ \item filter - Reduces the number queries to execute during percolating. Only the
+ percolator queries that match with the filter will be included in the percolate
+ execution. The filter option works in near realtime, so a refresh needs to have
+ occurred for the filter to included the latest percolate queries.
+ \item query - Same as the filter option, but also the score is computed. The
+ computed scores can then be used by the track_scores and sort option.
+ \item size - Defines to maximum number of matches (percolate queries) to be returned.
+ Defaults to unlimited.
+ \item track_scores - Whether the _score is included for each match. The _score is
+ based on the query and represents how the query matched the percolate query's
+ metadata, not how the document (that is being percolated) matched the query. The query
+ option is required for this option. Defaults to false.
+ \item sort - Define a sort specification like in the search API. Currently only
+ sorting _score reverse (default relevancy) is supported. Other sort fields will
+ throw an exception. The size and query option are required for this setting. Like
+ track_score the score is based on the query and represents how the query matched
+ to the percolate query's metadata and not how the document being percolated matched
+ to the query.
+ \item aggs - Allows aggregation definitions to be included. The aggregations are
+ based on the matching percolator queries, look at the aggregation documentation on
+ how to define aggregations.
+ \item highlight - Allows highlight definitions to be included. The document being
+ percolated is being highlight for each matching query. This allows you to see how
+ each match is highlighting the document being percolated. See highlight documentation
+ on how to define highlights. The size option is required for highlighting, the
+ performance of highlighting in the percolate API depends of how many matches are
+ being highlighted.
 }
 }
 \section{The Elasticsearch v5 split}{
 
-In Elasticsearch < v5, there's a certain set of percolate APIs available,
+In Elasticsearch < v5, there's a certain set of percolate APIs available, 
 while in Elasticsearch >= v5, there's a different set of APIs available.
 
 Internally within these percolate functions we detect your Elasticsearch
@@ -128,13 +108,10 @@ version, then use the appropriate APIs
 
 \examples{
 \dontrun{
-x <- connect(errors = "complete")
-
 ##### Elasticsearch < v5
-if (x$es_ver() < 500) {
 # typical usage
 ## create an index first
-if (index_exists(x, "myindex")) index_delete(x, "myindex")
+if (index_exists("myindex")) index_delete("myindex")
 mapping <- '{
   "mappings": {
     "mytype": {
@@ -142,14 +119,14 @@ mapping <- '{
         "message": {
            "type": "text"
         },
-        "query": {
-           "type": "percolator"
+        "name": {
+           "type": "text"
         }
       }
     }
   }
 }'
-index_create(x, "myindex", body = mapping)
+index_create("myindex", body = mapping)
 
 ## register a percolator
 perc_body = '{
@@ -159,57 +136,55 @@ perc_body = '{
     }
  }
 }'
-percolate_register(x, index = "myindex", type = "mytype", 
-  id = 1, body = perc_body)
+percolate_register(index = "myindex", id = 1, body = perc_body)
 
 ## register another
 perc_body2 <- '{
   "query" : {
     "match" : {
-      "message" : "jane doe"
+      "name" : "jane doe"
     }
   }
 }'
-percolate_register(x, index = "myindex", type = "mytype", 
-  id = 2, body = perc_body2)
+percolate_register(index = "myindex", id = 2, body = perc_body2)
 
 ## match a document to a percolator
 doc <- '{
- "query": {
-   "percolate": {
-     "field": "query",
-     "document": {
-       "message" : "A new bonsai tree in the office"
-     }
-   }
- }
+  "doc" : {
+    "message" : "A new bonsai tree in the office"
+  }
 }'
-percolate_match(x, index = "myindex", type = "mytype", body = doc)
+percolate_match(index = "myindex", type = "mytype", body = doc, config = verbose())
 
 ## List percolators - for an index, no type, can't do across indices
-percolate_list(x, index = "myindex")$hits$hits
+percolate_list(index = "myindex")$hits$hits
 
 ## Percolate counter
-percolate_count(x, index = "myindex", type = "mytype", body = doc)$total
+percolate_count(index = "myindex", type = "mytype", body = doc)$total
 
 ## delete a percolator
-percolate_delete(x, index = "myindex", id = 2)
-} # end ES < 5
+percolate_delete(index = "myindex", id = 2)
+
+# multi percolate
+## not working yet
+
 
 
 ##### Elasticsearch >= v5
-if (x$es_ver() >= 500 && x$es_ver() <= 700) {
-if (index_exists(x, "myindex")) index_delete(x, "myindex")
-
+if (index_exists("myindex")) index_delete("myindex")
 body <- '{
   "mappings": {
-    "mytype": {
+    "doctype": {
       "properties": {
         "message": {
-           "type": "text"
-        },
+          "type": "text"
+        }
+      }
+    },
+    "queries": {
+      "properties": {
         "query": {
-           "type": "percolator"
+          "type": "percolator"
         }
       }
     }
@@ -217,17 +192,17 @@ body <- '{
 }'
 
 # create the index with mapping
-index_create(x, "myindex", body = body)
+index_create("myindex", body = body)
 
 ## register a percolator
-z <- '{
+x <- '{
   "query" : {
      "match" : {
        "message" : "bonsai tree"
      }
   }
 }'
-percolate_register(x, index = "myindex", type = "mytype", id = 1, body = z)
+percolate_register(index = "myindex", type = "queries", id = 1, body = x)
 
 ## register another
 x2 <- '{
@@ -237,82 +212,24 @@ x2 <- '{
     }
   }
 }'
-percolate_register(x, index = "myindex", type = "mytype", id = 2, body = x2)
+percolate_register(index = "myindex", type = "queries", id = 2, body = x2)
 
 ## match a document to a percolator
 query <- '{
   "query" : {
     "percolate" : {
       "field": "query",
+      "document_type": "doctype",
       "document": {
         "message": "A new bonsai tree in the office"
       }
     }
   }
 }'
-percolate_match(x, index = "myindex", body = query)
-} # end ES >= 5
-
-
-
-
-##### Elasticsearch >= v7
-if (x$es_ver() >= 700) {
-if (index_exists(x, "myindex")) index_delete(x, "myindex")
-
-body <- '{
-  "mappings": {
-    "properties": {
-      "message": {
-        "type": "text"
-      },
-      "query": {
-        "type": "percolator"
-      }
-    }
-  }
-}'
-
-# create the index with mapping
-index_create(x, "myindex", body = body)
-
-## register a percolator
-z <- '{
-  "query" : {
-     "match" : {
-       "message" : "bonsai tree"
-     }
-  }
-}'
-percolate_register(x, index = "myindex", id = 1, body = z)
-
-## register another
-x2 <- '{
-  "query" : {
-    "match" : {
-      "message" : "the office"
-    }
-  }
-}'
-percolate_register(x, index = "myindex", id = 2, body = x2)
-
-## match a document to a percolator
-query <- '{
-  "query" : {
-    "percolate" : {
-      "field": "query",
-      "document": {
-        "message": "A new bonsai tree in the office"
-      }
-    }
-  }
-}'
-percolate_match(x, index = "myindex", body = query)
-} # end ES >= 7
-
-
+percolate_match(index = "myindex", body = query)
 }
 }
 \references{
 \url{https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-percolate-query.html}
+\url{https://www.elastic.co/guide/en/elasticsearch/reference/current/search-percolate.html}
 }

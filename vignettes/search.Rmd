@@ -24,16 +24,11 @@ The main interface to searching documents in your Elasticsearch store is the fun
 
 There are a huge amount of ways you can search Elasticsearch documents - this tutorial covers some of them, and highlights the ways in which you interact with the R outputs.
 
-
-```r
-x <- connect()
-```
-
 ### Search an index
 
 
 ```r
-out <- Search(x, index="shakespeare")
+out <- Search(index="shakespeare")
 out$hits$total
 ```
 
@@ -51,7 +46,7 @@ out$hits$hits[[1]]
 #> [1] "shakespeare"
 #> 
 #> $`_type`
-#> [1] "line"
+#> [1] "act"
 #> 
 #> $`_id`
 #> [1] "0"
@@ -80,7 +75,7 @@ out$hits$hits[[1]]
 
 
 ```r
-Search(x, index = "shakespeare", type = "line")$hits$hits[[1]]
+Search(index = "shakespeare", type = "act")$hits$hits[[1]]
 ```
 
 ```
@@ -88,7 +83,7 @@ Search(x, index = "shakespeare", type = "line")$hits$hits[[1]]
 #> [1] "shakespeare"
 #> 
 #> $`_type`
-#> [1] "line"
+#> [1] "act"
 #> 
 #> $`_id`
 #> [1] "0"
@@ -117,7 +112,7 @@ Search(x, index = "shakespeare", type = "line")$hits$hits[[1]]
 
 
 ```r
-Search(x, index = "shakespeare", body = '{
+Search(index = "shakespeare", body = '{
   "_source": ["play_name", "speaker"]
 }')$hits$hits[[1]]
 ```
@@ -127,7 +122,7 @@ Search(x, index = "shakespeare", body = '{
 #> [1] "shakespeare"
 #> 
 #> $`_type`
-#> [1] "line"
+#> [1] "act"
 #> 
 #> $`_id`
 #> [1] "0"
@@ -148,7 +143,7 @@ Search(x, index = "shakespeare", body = '{
 
 
 ```r
-Search(x, index="shakespeare", size=1, from=1)$hits
+Search(index="shakespeare", size=1, from=1)$hits
 ```
 
 ```
@@ -198,11 +193,11 @@ Using the `q` parameter you can pass in a query, which gets passed in the URI of
 
 
 ```r
-Search(x, index="shakespeare", type="line", q="speaker:KING HENRY IV")$hits$total
+Search(index="shakespeare", type="act", q="speaker:KING HENRY IV")$hits$total
 ```
 
 ```
-#> [1] 5000
+#> [1] 9
 ```
 
 #### More complex queries
@@ -211,7 +206,7 @@ Here, query for values from 10 to 20 in the field `line_id`
 
 
 ```r
-Search(x, index="shakespeare", q="line_id:[10 TO 20]")$hits$total
+Search(index="shakespeare", q="line_id:[10 TO 20]")$hits$total
 ```
 
 ```
@@ -224,31 +219,32 @@ Version number usually is not returned.
 
 
 ```r
-sapply(Search(x, index="shakespeare", version=TRUE, size=2)$hits$hits, "[[", "_version")
+sapply(Search(index="shakespeare", version=TRUE, size=2)$hits$hits, "[[", "_version")
 ```
 
 ```
-#> [1] 3 4
+#> [1] 1 1
 ```
 
 ### Get raw data
 
 
 ```r
-Search(x, index="shakespeare", type="line", raw=TRUE)
+Search(index="shakespeare", type="scene", raw=TRUE)
 ```
 
 ```
-#> [1] "{\"took\":0,\"timed_out\":false,\"_shards\":{\"total\":5,\"successful\":5,\"skipped\":0,\"failed\":0},\"hits\":{\"total\":5000,\"max_score\":1.0,\"hits\":[{\"_index\":\"shakespeare\",\"_type\":\"line\",\"_id\":\"0\",\"_score\":1.0,\"_source\":{\"line_id\":1,\"play_name\":\"Henry IV\",\"line_number\":\"\",\"speaker\":\"\",\"text_entry\":\"ACT I\"}},{\"_index\":\"shakespeare\",\"_type\":\"line\",\"_id\":\"14\",\"_score\":1.0,\"_source\":{\"line_id\":15,\"play_name\":\"Henry IV\",\"speech_number\":1,\"line_number\":\"1.1.12\",\"speaker\":\"KING HENRY IV\",\"text_entry\":\"Did lately meet in the intestine shock\"}},{\"_index\":\"shakespeare\",\"_type\":\"line\",\"_id\":\"19\",\"_score\":1.0,\"_source\":{\"line_id\":20,\"play_name\":\"Henry IV\",\"speech_number\":1,\"line_number\":\"1.1.17\",\"speaker\":\"KING HENRY IV\",\"text_entry\":\"The edge of war, like an ill-sheathed knife,\"}},{\"_index\":\"shakespeare\",\"_type\":\"line\",\"_id\":\"22\",\"_score\":1.0,\"_source\":{\"line_id\":23,\"play_name\":\"Henry IV\",\"speech_number\":1,\"line_number\":\"1.1.20\",\"speaker\":\"KING HENRY IV\",\"text_entry\":\"Whose soldier now, under whose blessed cross\"}},{\"_index\":\"shakespeare\",\"_type\":\"line\",\"_id\":\"24\",\"_score\":1.0,\"_source\":{\"line_id\":25,\"play_name\":\"Henry IV\",\"speech_number\":1,\"line_number\":\"1.1.22\",\"speaker\":\"KING HENRY IV\",\"text_entry\":\"Forthwith a power of English shall we levy;\"}},{\"_index\":\"shakespeare\",\"_type\":\"line\",\"_id\":\"25\",\"_score\":1.0,\"_source\":{\"line_id\":26,\"play_name\":\"Henry IV\",\"speech_number\":1,\"line_number\":\"1.1.23\",\"speaker\":\"KING HENRY IV\",\"text_entry\":\"Whose arms were moulded in their mothers womb\"}},{\"_index\":\"shakespeare\",\"_type\":\"line\",\"_id\":\"26\",\"_score\":1.0,\"_source\":{\"line_id\":27,\"play_name\":\"Henry IV\",\"speech_number\":1,\"line_number\":\"1.1.24\",\"speaker\":\"KING HENRY IV\",\"text_entry\":\"To chase these pagans in those holy fields\"}},{\"_index\":\"shakespeare\",\"_type\":\"line\",\"_id\":\"29\",\"_score\":1.0,\"_source\":{\"line_id\":30,\"play_name\":\"Henry IV\",\"speech_number\":1,\"line_number\":\"1.1.27\",\"speaker\":\"KING HENRY IV\",\"text_entry\":\"For our advantage on the bitter cross.\"}},{\"_index\":\"shakespeare\",\"_type\":\"line\",\"_id\":\"40\",\"_score\":1.0,\"_source\":{\"line_id\":41,\"play_name\":\"Henry IV\",\"speech_number\":2,\"line_number\":\"1.1.38\",\"speaker\":\"WESTMORELAND\",\"text_entry\":\"Whose worst was, that the noble Mortimer,\"}},{\"_index\":\"shakespeare\",\"_type\":\"line\",\"_id\":\"41\",\"_score\":1.0,\"_source\":{\"line_id\":42,\"play_name\":\"Henry IV\",\"speech_number\":2,\"line_number\":\"1.1.39\",\"speaker\":\"WESTMORELAND\",\"text_entry\":\"Leading the men of Herefordshire to fight\"}}]}}"
+#> [1] "{\"took\":2,\"timed_out\":false,\"_shards\":{\"total\":5,\"successful\":5,\"skipped\":0,\"failed\":0},\"hits\":{\"total\":34,\"max_score\":1.0,\"hits\":[{\"_index\":\"shakespeare\",\"_type\":\"scene\",\"_id\":\"646\",\"_score\":1.0,\"_source\":{\"line_id\":647,\"play_name\":\"Henry IV\",\"speech_number\":54,\"line_number\":\"\",\"speaker\":\"HOTSPUR\",\"text_entry\":\"SCENE I. Rochester. An inn yard.\"}},{\"_index\":\"shakespeare\",\"_type\":\"scene\",\"_id\":\"1829\",\"_score\":1.0,\"_source\":{\"line_id\":1830,\"play_name\":\"Henry IV\",\"speech_number\":74,\"line_number\":\"\",\"speaker\":\"MORTIMER\",\"text_entry\":\"SCENE II. London. The palace.\"}},{\"_index\":\"shakespeare\",\"_type\":\"scene\",\"_id\":\"2588\",\"_score\":1.0,\"_source\":{\"line_id\":2589,\"play_name\":\"Henry IV\",\"speech_number\":28,\"line_number\":\"\",\"speaker\":\"SIR WALTER BLUNT\",\"text_entry\":\"SCENE IV. York. The ARCHBISHOPS palace.\"}},{\"_index\":\"shakespeare\",\"_type\":\"scene\",\"_id\":\"3156\",\"_score\":1.0,\"_source\":{\"line_id\":3157,\"play_name\":\"Henry IV\",\"speech_number\":37,\"line_number\":\"\",\"speaker\":\"FALSTAFF\",\"text_entry\":\"SCENE V. Another part of the field.\"}},{\"_index\":\"shakespeare\",\"_type\":\"scene\",\"_id\":\"3870\",\"_score\":1.0,\"_source\":{\"line_id\":3871,\"play_name\":\"Henry VI Part 1\",\"speech_number\":5,\"line_number\":\"\",\"speaker\":\"CHARLES\",\"text_entry\":\"SCENE I. Before Orleans.\"}},{\"_index\":\"shakespeare\",\"_type\":\"scene\",\"_id\":\"4031\",\"_score\":1.0,\"_source\":{\"line_id\":4032,\"play_name\":\"Henry VI Part 1\",\"speech_number\":12,\"line_number\":\"\",\"speaker\":\"Captain\",\"text_entry\":\"SCENE III. Auvergne. The COUNTESSs castle.\"}},{\"_index\":\"shakespeare\",\"_type\":\"scene\",\"_id\":\"4294\",\"_score\":1.0,\"_source\":{\"line_id\":4295,\"play_name\":\"Henry VI Part 1\",\"speech_number\":47,\"line_number\":\"\",\"speaker\":\"PLANTAGENET\",\"text_entry\":\"SCENE V. The Tower of London.\"}},{\"_index\":\"shakespeare\",\"_type\":\"scene\",\"_id\":\"4923\",\"_score\":1.0,\"_source\":{\"line_id\":4924,\"play_name\":\"Henry VI Part 1\",\"speech_number\":24,\"line_number\":\"\",\"speaker\":\"CHARLES\",\"text_entry\":\"SCENE IV. Paris. The palace.\"}},{\"_index\":\"shakespeare\",\"_type\":\"scene\",\"_id\":\"4975\",\"_score\":1.0,\"_source\":{\"line_id\":4976,\"play_name\":\"Henry VI Part 1\",\"speech_number\":11,\"line_number\":\"\",\"speaker\":\"VERNON\",\"text_entry\":\"SCENE I. Paris. A hall of state.\"}},{\"_index\":\"shakespeare\",\"_type\":\"scene\",\"_id\":\"324\",\"_score\":1.0,\"_source\":{\"line_id\":325,\"play_name\":\"Henry IV\",\"speech_number\":62,\"line_number\":\"\",\"speaker\":\"PRINCE HENRY\",\"text_entry\":\"SCENE III. London. The palace.\"}}]}}"
 ```
 
 ### Curl debugging
 
-Common options are `verbose=TRUE`, `timeout_ms=1`, `followlocation=TRUE`.
+Common options are `verbose()`, `timeout()`, `progress()`, `config(followlocation=TRUE)`.
 
 
 ```r
-out <- Search(x, index="shakespeare", type="line", verbose = TRUE)
+library('httr')
+out <- Search(index="shakespeare", type="line", config=verbose())
 ```
 
 ### Query DSL searches - queries sent in the body of the request
@@ -257,7 +253,7 @@ Pass in as an R list
 
 
 ```r
-mapping_create(x, "shakespeare", "line", update_all_types = TRUE, body = '{
+mapping_create("shakespeare", "act", update_all_types = TRUE, body = '{
    "properties": {
      "text_entry": {
        "type":     "text",
@@ -274,7 +270,7 @@ mapping_create(x, "shakespeare", "line", update_all_types = TRUE, body = '{
 
 ```r
 aggs <- list(aggs = list(stats = list(terms = list(field = "text_entry"))))
-Search(x, index="shakespeare", body=aggs)$hits$hits[[1]]
+Search(index="shakespeare", body=aggs)$hits$hits[[1]]
 ```
 
 ```
@@ -282,7 +278,7 @@ Search(x, index="shakespeare", body=aggs)$hits$hits[[1]]
 #> [1] "shakespeare"
 #> 
 #> $`_type`
-#> [1] "line"
+#> [1] "act"
 #> 
 #> $`_id`
 #> [1] "0"
@@ -320,7 +316,7 @@ aggs <- '{
         }
     }
 }'
-Search(x, index="shakespeare", body=aggs)$hits$hits[[1]]
+Search(index="shakespeare", body=aggs)$hits$hits[[1]]
 ```
 
 ```
@@ -328,7 +324,7 @@ Search(x, index="shakespeare", body=aggs)$hits$hits[[1]]
 #> [1] "shakespeare"
 #> 
 #> $`_type`
-#> [1] "line"
+#> [1] "act"
 #> 
 #> $`_id`
 #> [1] "0"
@@ -358,7 +354,7 @@ Or pass in collapsed json string
 
 ```r
 aggs <- '{"aggs":{"stats":{"terms":{"field":"text_entry"}}}}'
-Search(x, index="shakespeare", body=aggs)$hits$hits[[1]]
+Search(index="shakespeare", body=aggs)$hits$hits[[1]]
 ```
 
 ```
@@ -366,7 +362,7 @@ Search(x, index="shakespeare", body=aggs)$hits$hits[[1]]
 #> [1] "shakespeare"
 #> 
 #> $`_type`
-#> [1] "line"
+#> [1] "act"
 #> 
 #> $`_id`
 #> [1] "0"
@@ -407,7 +403,7 @@ aggs <- '{
         }
     }
 }'
-Search(x, index="gbif", body=aggs, size=0)$aggregations$latbuckets$buckets[1:3]
+Search(index="gbif", body=aggs, size=0)$aggregations$latbuckets$buckets[1:3]
 ```
 
 ```
@@ -447,7 +443,7 @@ mmatch <- '{
          "speech_number" : {
            "from" : 1, "to": 5
 }}}}}}'
-sapply(Search(x, index="shakespeare", body=mmatch)$hits$hits, function(x) x$`_source`$speech_number)
+sapply(Search(index="shakespeare", body=mmatch)$hits$hits, function(x) x$`_source`$speech_number)
 ```
 
 ```
@@ -489,7 +485,7 @@ Fuzzy query on numerics
 
 ```r
 fuzzy <- list(query = list(fuzzy = list(text_entry = "arms")))
-Search(x, index="shakespeare", body = fuzzy)$hits$total
+Search(index="shakespeare", body = fuzzy)$hits$total
 ```
 
 ```
@@ -499,7 +495,7 @@ Search(x, index="shakespeare", body = fuzzy)$hits$total
 
 ```r
 fuzzy <- list(query = list(fuzzy = list(text_entry = list(value = "arms", fuzziness = 4))))
-Search(x, index="shakespeare", body=fuzzy)$hits$total
+Search(index="shakespeare", body=fuzzy)$hits$total
 ```
 
 ```
@@ -513,7 +509,7 @@ With numeric
 
 ```r
 body <- list(query=list(range=list(decimalLongitude=list(gte=1, lte=3))))
-Search(x, 'gbif', body=body)$hits$total
+Search('gbif', body=body)$hits$total
 ```
 
 ```
@@ -523,7 +519,7 @@ Search(x, 'gbif', body=body)$hits$total
 
 ```r
 body <- list(query=list(range=list(decimalLongitude=list(gte=2.9, lte=10))))
-Search(x, 'gbif', body=body)$hits$total
+Search('gbif', body=body)$hits$total
 ```
 
 ```
@@ -535,21 +531,21 @@ With dates
 
 ```r
 body <- list(query=list(range=list(eventDate=list(gte="2012-01-01", lte="now"))))
-Search(x, 'gbif', body=body)$hits$total
+Search('gbif', body=body)$hits$total
 ```
 
 ```
-#> [1] 301
+#> [1] 300
 ```
 
 
 ```r
 body <- list(query=list(range=list(eventDate=list(gte="2014-01-01", lte="now"))))
-Search(x, 'gbif', body=body)$hits$total
+Search('gbif', body=body)$hits$total
 ```
 
 ```
-#> [1] 292
+#> [1] 291
 ```
 
 ### More-like-this query (more_like_this can be shortened to mlt)
@@ -560,13 +556,13 @@ body <- '{
  "query": {
    "more_like_this": {
      "fields": ["abstract","title"],
-     "like": "and then",
+     "like_text": "and then",
      "min_term_freq": 1,
      "max_query_terms": 12
    }
  }
 }'
-Search(x, 'plos', body=body)$hits$total
+Search('plos', body=body)$hits$total
 ```
 
 ```
@@ -579,13 +575,13 @@ body <- '{
  "query": {
    "more_like_this": {
      "fields": ["abstract","title"],
-     "like": "cell",
+     "like_text": "cell",
      "min_term_freq": 1,
      "max_query_terms": 12
    }
  }
 }'
-Search(x, 'plos', body=body)$hits$total
+Search('plos', body=body)$hits$total
 ```
 
 ```
@@ -609,7 +605,7 @@ body <- '{
    }
  }
 }'
-out <- Search(x, 'plos', 'article', body=body)
+out <- Search('plos', 'article', body=body)
 out$hits$total
 ```
 
@@ -623,16 +619,21 @@ sapply(out$hits$hits, function(x) x$highlight$title[[1]])[8:10]
 ```
 
 ```
-#> [1] "Chronic Hypoxia Promotes Pulmonary Artery Endothelial <em>Cell</em> Proliferation through H2O2-Induced 5-Lipoxygenase"  
-#> [2] "Dynamic Visualization of Dendritic <em>Cell</em>-Antigen Interactions in the Skin Following Transcutaneous Immunization"
-#> [3] "A New Class of Pluripotent Stem <em>Cell</em> Cytotoxic Small Molecules"
+#> [[1]]
+#> NULL
+#> 
+#> [[2]]
+#> NULL
+#> 
+#> [[3]]
+#> NULL
 ```
 
 ### Scrolling search - instead of paging
 
 
 ```r
-Search(x, 'shakespeare', q="a*")$hits$total
+Search('shakespeare', q="a*")$hits$total
 ```
 
 ```
@@ -640,8 +641,8 @@ Search(x, 'shakespeare', q="a*")$hits$total
 ```
 
 ```r
-res <- Search(x, index = 'shakespeare', q="a*", time_scroll = "1m")
-length(scroll(x, res$`_scroll_id`, time_scroll = "1m")$hits$hits)
+res <- Search(index = 'shakespeare', q="a*", time_scroll = "1m")
+length(scroll(res$`_scroll_id`)$hits$hits)
 ```
 
 ```
@@ -650,11 +651,11 @@ length(scroll(x, res$`_scroll_id`, time_scroll = "1m")$hits$hits)
 
 
 ```r
-res <- Search(x, index = 'shakespeare', q = "a*", time_scroll = "5m")
-out <- res$hits$hits
+res <- Search(index = 'shakespeare', q = "a*", time_scroll = "5m")
+out <- list()
 hits <- 1
 while (hits != 0) {
-  res <- scroll(x, res$`_scroll_id`)
+  res <- scroll(res$`_scroll_id`)
   hits <- length(res$hits$hits)
   if (hits > 0)
     out <- c(out, res$hits$hits)
@@ -663,15 +664,7 @@ length(out)
 ```
 
 ```
-#> [1] 2747
+#> [1] 2737
 ```
 
-```r
-res$hits$total
-```
-
-```
-#> [1] 2747
-```
-
-Woohoo! Collected all 2747 documents in very little time.
+Woohoo! Collected all 2737 documents in very little time.

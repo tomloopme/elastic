@@ -4,40 +4,23 @@
 \alias{docs_create}
 \title{Create a document}
 \usage{
-docs_create(
-  conn,
-  index,
-  body,
-  type = NULL,
-  id = NULL,
-  version = NULL,
-  version_type = NULL,
-  op_type = NULL,
-  routing = NULL,
-  parent = NULL,
-  timestamp = NULL,
-  ttl = NULL,
-  refresh = NULL,
-  timeout = NULL,
-  callopts = list(),
-  ...
-)
+docs_create(index, type, id, body, version = NULL, version_type = NULL,
+  op_type = NULL, routing = NULL, parent = NULL, timestamp = NULL,
+  ttl = NULL, refresh = NULL, timeout = NULL, callopts = list(), ...)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{index}{(character) The name of the index. Required}
 
-\item{body}{The document}
+\item{type}{(character) The type of the document. Required}
 
-\item{type}{(character) The type of the document. optional}
+\item{id}{(numeric/character) The document ID. Can be numeric or character. 
+Required}
 
-\item{id}{(numeric/character) The document ID. Can be numeric or character.
-Optional. if not provided, Elasticsearch creates the ID for you as a UUID.}
+\item{body}{The document.}
 
 \item{version}{(character) Explicit version number for concurrency control}
 
-\item{version_type}{(character) Specific version type. One of internal,
+\item{version_type}{(character) Specific version type. One of internal, 
 external, external_gte, or force}
 
 \item{op_type}{(character) Operation type. One of create, or ...}
@@ -49,18 +32,18 @@ external, external_gte, or force}
 \item{timestamp}{(date) Explicit timestamp for the document}
 
 \item{ttl}{(aka \dQuote{time to live}) Expiration time for the document.
-Expired documents will be expunged automatically. The expiration date that
-will be set for a document with a provided ttl is relative to the timestamp
-of the document,  meaning it can be based on the time of indexing or on
-any time provided. The provided ttl must be strictly positive and can be
+Expired documents will be expunged automatically. The expiration date that 
+will be set for a document with a provided ttl is relative to the timestamp 
+of the document,  meaning it can be based on the time of indexing or on 
+any time provided. The provided ttl must be strictly positive and can be 
 a number (in milliseconds) or any valid time value (e.g, 86400000, 1d).}
 
 \item{refresh}{(logical) Refresh the index after performing the operation}
 
-\item{timeout}{(character) Explicit operation timeout, e.g,. 5m (for
+\item{timeout}{(character) Explicit operation timeout, e.g,. 5m (for 
 5 minutes)}
 
-\item{callopts}{Curl options passed on to \link[crul:HttpClient]{crul::HttpClient}}
+\item{callopts}{Curl options passed on to \code{\link[httr]{PUT}}}
 
 \item{...}{Further args to query DSL}
 }
@@ -69,27 +52,17 @@ Create a document
 }
 \examples{
 \dontrun{
-(x <- connect())
-
-if (!index_exists(x, 'plos')) {
-  plosdat <- system.file("examples", "plos_data.json",
-    package = "elastic")
-  plosdat <- type_remover(plosdat)
-  invisible(docs_bulk(x, plosdat))
+connect()
+if (!index_exists('plos')) {
+  plosdat <- system.file("examples", "plos_data.json", package = "elastic")
+  invisible(docs_bulk(plosdat))
 }
 
-# give a document id
-z <- docs_create(x, index = 'plos', id = 1002,
-  body = list(id = "12345", title = "New title"))
-z
-# and the document is there now
-docs_get(x, index = 'plos', id = 1002)
+docs_create(index='plos', type='article', id=1002, 
+  body=list(id="12345", title="New title"))
 
-# let Elasticsearch create the document id for you
-z <- docs_create(x, index='plos', body=list(id="6789", title="Some title"))
-z
 # and the document is there now
-docs_get(x, index='plos', id=z$`_id`)
+docs_get(index='plos', type='article', id=1002)
 }
 }
 \references{

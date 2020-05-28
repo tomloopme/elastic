@@ -3,59 +3,53 @@
 #' @export
 #' @template search_par
 #' @template search_uri_egs
-#' @seealso [fielddata()]
+#' @seealso \code{\link{fielddata}}
 #' @param search_path (character) The path to use for searching. Default
-#' to `_search`, but in some cases you may already have that in the base
-#' url set using [connect()], in which case you can set this
-#' to `NULL`
-#' @seealso [Search()] [Search_template()] [count()] [fielddata()]
+#' to \code{_search}, but in some cases you may already have that in the base
+#' url set using \code{\link{connect}}, in which case you can set this
+#' to \code{NULL}
+#' @seealso \code{\link{Search}} \code{\link{Search_template}}
+#' \code{\link{count}} \code{\link{fielddata}}
 
-Search_uri <- function(conn, index=NULL, type=NULL, q=NULL, df=NULL, analyzer=NULL,
+Search_uri <- function(index=NULL, type=NULL, q=NULL, df=NULL, analyzer=NULL,
   default_operator=NULL, explain=NULL, source=NULL, fields=NULL, sort=NULL,
   track_scores=NULL, timeout=NULL, terminate_after=NULL, from=NULL, size=NULL,
   search_type=NULL, lowercase_expanded_terms=NULL, analyze_wildcard=NULL,
-  version=NULL, lenient=FALSE, raw=FALSE, asdf=FALSE, track_total_hits = TRUE,
+  version=NULL, lenient=FALSE, raw=FALSE, asdf=FALSE,
   search_path="_search", stream_opts=list(), ...) {
 
-  is_conn(conn)
-  search_GET(conn, search_path, cl(index), type,
+  search_GET(search_path, cl(index), type,
     args = ec(list(df = df, analyzer = analyzer,
-      default_operator = default_operator, explain = as_log(explain),
+      default_operator = default_operator, explain = explain,
       `_source` = cl(source), fields = cl(fields), sort = cl(sort),
       track_scores = track_scores, timeout = cn(timeout),
       terminate_after = cn(terminate_after), from = cn(from), size = cn(size),
       search_type = search_type,
       lowercase_expanded_terms = lowercase_expanded_terms,
-      analyze_wildcard = analyze_wildcard, version = as_log(version), q = q,
-      lenient = as_log(lenient), track_total_hits = ck(track_total_hits))), raw, asdf, stream_opts, ...)
+      analyze_wildcard = analyze_wildcard, version = as_log(version), q = q)),
+      raw, asdf, stream_opts, ...)
 }
 
-search_GET <- function(conn, path, index=NULL, type=NULL, args, raw, asdf, 
+search_GET <- function(path, index=NULL, type=NULL, args, raw, asdf, 
                        stream_opts, ...) {
-  url <- conn$make_url()
+  conn <- es_get_auth()
+  url <- make_url(conn)
   url <- construct_url(url, path, index, type)
   url <- prune_trailing_slash(url)
-  # track_total_hits introduced in ES >= 7.0
-  if (conn$es_ver() < 700) args$track_total_hits <- NULL
   # in ES >= v5, lenient param droppped
-  if (conn$es_ver() >= 500) args$lenient <- NULL
+  if (es_ver() >= 500) args$lenient <- NULL
   # in ES >= v5, fields param changed to stored_fields
-  if (conn$es_ver() >= 500) {
+  if (es_ver() >= 500) {
     if ("fields" %in% names(args)) {
       stop(
         '"fields" parameter is deprecated in ES >= v5. See help in ?Search_uri', 
         call. = FALSE)
     }
   }
-  cli <- crul::HttpClient$new(url = url,
-    headers = c(conn$headers, json_type()), 
-    opts = c(conn$opts, ...),
-    auth = crul::auth(conn$user, conn$pwd)
-  )
-  tt <- cli$get(query = args)
-  geterror(conn, tt)
-  if (conn$warn) catch_warnings(tt)
-  res <- tt$parse("UTF-8")
+  tt <- GET(url, query = args, make_up(), content_type_json(), 
+            es_env$headers, ...)
+  geterror(tt)
+  res <- cont_utf8(tt)
   
   if (raw) {
     res 

@@ -1,17 +1,12 @@
 context("count")
 
-x <- connect(warn = FALSE)
-z <- connect(warn = TRUE)
-load_shakespeare(x)
-
-# sleep to make sure data is available as expected
-Sys.sleep(2)
+invisible(connect())
 
 test_that("count", {
-  a <- count(x)
-  b <- count(x, index = 'shakespeare')
-  c <- count(x, index = 'shakespeare', q = "a*")
-  d <- count(x, index = 'shakespeare', q = "z*")
+  a <- count()
+  b <- count(index = 'shakespeare')
+  c <- count(index = 'shakespeare', q = "a*")
+  d <- count(index = 'shakespeare', q = "z*")
 
   expect_is(a, "integer")
   expect_is(b, "integer")
@@ -20,17 +15,6 @@ test_that("count", {
 
   expect_gt(b, 10)
 
-  expect_error(count(x, "adfadf"), "no such index||IndexMissing")
-  
-  if (x$es_ver() > 246) {
-    expect_equal(suppressWarnings(count(x, type = "adfad")), 0)
-  } else {
-    expect_error(count(x, type = "adfad"), 
-      "no such index||IndexMissingException")
-  }
-
-  if (z$es_ver() >= 700) {
-    expect_warning(count(z, 'shakespeare', type = "line"), 
-      "Specifying types in count requests is deprecated")
-  }
+  expect_error(count("adfadf"), "no such index||IndexMissing")
+  expect_error(count(type = "adfad"), "no such index||IndexMissing")
 })

@@ -4,15 +4,8 @@
 \alias{docs_bulk_prep}
 \title{Use the bulk API to prepare bulk format data}
 \usage{
-docs_bulk_prep(
-  x,
-  index,
-  path,
-  type = NULL,
-  chunk_size = 1000,
-  doc_ids = NULL,
-  quiet = FALSE
-)
+docs_bulk_prep(x, index, path, type = NULL, chunk_size = 1000,
+  doc_ids = NULL)
 }
 \arguments{
 \item{x}{A data.frame or a list. required.}
@@ -23,8 +16,8 @@ docs_bulk_prep(
 we'll use this path as the prefix, and suffix each file path with a number.
 required.}
 
-\item{type}{(character) The type. default: \code{NULL}. Note that \code{type} is
-deprecated in Elasticsearch v7 and greater, and removed in Elasticsearch v8}
+\item{type}{(character) The type name to use. If left as NULL, will be
+same name as index.}
 
 \item{chunk_size}{(integer) Size of each chunk. If your data.frame is smaller
 thank \code{chunk_size}, this parameter is essentially ignored. We write in
@@ -37,8 +30,6 @@ pass a file name. Default: 1000}
 ids to use. This vector has to equal the size of the documents you are
 passing in, and will error if not. If you pass a factor we convert to
 character. Default: not passed}
-
-\item{quiet}{(logical) Suppress progress bar. Default: \code{FALSE}}
 }
 \value{
 File path(s). By default we use temporary files; these are cleaned
@@ -47,32 +38,22 @@ up at the end of a session
 \description{
 Use the bulk API to prepare bulk format data
 }
-\section{Tempfiles}{
-
-In \code{docs_bulk} we create temporary files in some cases, and delete
-those before the function exits. However, we don't clean up those files
-in this function because the point of the function is to create the
-newline delimited JSON files that you need. Tempfiles are cleaned up
-when you R session ends though - be aware of that. If you want to
-keep the files make sure to move them outside of the temp directory.
-}
-
 \examples{
 \dontrun{
 # From a data.frame
 ff <- tempfile(fileext = ".json")
-docs_bulk_prep(mtcars, index = "hello", path = ff)
+docs_bulk_prep(mtcars, index = "hello", type = "world", path = ff)
 readLines(ff)
 
 ## field names cannot contain dots
 names(iris) <- gsub("\\\\.", "_", names(iris))
-docs_bulk_prep(iris, "iris", path = tempfile(fileext = ".json"))
+docs_bulk_prep(iris, "iris", "flowers", path = tempfile(fileext = ".json"))
 
 ## type can be missing, but index can not
 docs_bulk_prep(iris, "flowers", path = tempfile(fileext = ".json"))
 
 # From a list
-docs_bulk_prep(apply(iris, 1, as.list), index="iris",
+docs_bulk_prep(apply(iris, 1, as.list), index="iris", type="flowers",
    path = tempfile(fileext = ".json"))
 docs_bulk_prep(apply(USArrests, 1, as.list), index="arrests",
    path = tempfile(fileext = ".json"))
@@ -92,7 +73,7 @@ files <- c(system.file("examples", "test1.csv", package = "elastic"),
 paths <- vector("list", length = length(files))
 for (i in seq_along(files)) {
   d <- read.csv(files[[i]])
-  paths[i] <- docs_bulk_prep(d, index = "stuff",
+  paths[i] <- docs_bulk_prep(d, index = "stuff", type = "docs",
      path = tempfile(fileext = ".json"))
 }
 unlist(paths)
@@ -109,8 +90,8 @@ ids <- list(1:tt[1],
 paths <- vector("list", length = length(files))
 for (i in seq_along(files)) {
   d <- read.csv(files[[i]])
-  paths[i] <- docs_bulk_prep(d, index = "testes",
-    doc_ids = ids[[i]], path = tempfile(fileext = ".json"))
+  paths[i] <- docs_bulk_prep(d, index = "testes", type = "docs",
+    doc_ids = ids[[i]], es_ids = FALSE, path = tempfile(fileext = ".json"))
 }
 unlist(paths)
 
@@ -122,7 +103,7 @@ files <- c(system.file("examples", "test1_id.csv", package = "elastic"),
 paths <- vector("list", length = length(files))
 for (i in seq_along(files)) {
   d <- read.csv(files[[i]])
-  paths[i] <- docs_bulk_prep(d, index = "testes",
+  paths[i] <- docs_bulk_prep(d, index = "testes", type = "docs",
      path = tempfile(fileext = ".json"))
 }
 unlist(paths)
@@ -132,51 +113,13 @@ paths <- vector("list", length = length(files))
 for (i in seq_along(files)) {
   d <- read.csv(files[[i]])
   d <- apply(d, 1, as.list)
-  paths[i] <- docs_bulk_prep(d, index = "testes",
+  paths[i] <- docs_bulk_prep(d, index = "testes", type = "docs",
       path = tempfile(fileext = ".json"))
 }
 unlist(paths)
 
-
-# A mix of actions
-## make sure you use a column named 'es_action' or this won't work
-## if you need to delete or update you need document IDs
-if (index_exists(x, "baz")) index_delete(x, "baz")
-df <- data.frame(a = 1:5, b = 6:10, c = letters[1:5], stringsAsFactors = FALSE) 
-f <- tempfile(fileext = ".json")
-invisible(docs_bulk_prep(df, "baz", f))
-cat(readLines(f), sep = "\n")
-docs_bulk(x, f)
-Sys.sleep(2)
-(res <- Search(x, 'baz', asdf=TRUE)$hits$hits)
-
-df[1, "a"] <- 99
-df[1, "c"] <- "aa"
-df[3, "c"] <- 33
-df[3, "c"] <- "cc"
-df$es_action <- c('update', 'delete', 'update', 'delete', 'delete')
-df$id <- res$`_id`
-df
-f <- tempfile(fileext = ".json")
-invisible(docs_bulk_prep(df, "baz", path = f, doc_ids = df$id))
-cat(readLines(f), sep = "\n")
-docs_bulk(x, f)
-
-
-# suppress progress bar
-docs_bulk_prep(mtcars, index = "hello",
-  path = tempfile(fileext = ".json"), quiet = TRUE)
-## vs. 
-docs_bulk_prep(mtcars, index = "hello",
-  path = tempfile(fileext = ".json"), quiet = FALSE)
 }
 }
 \seealso{
-Other bulk-functions: 
-\code{\link{docs_bulk_create}()},
-\code{\link{docs_bulk_delete}()},
-\code{\link{docs_bulk_index}()},
-\code{\link{docs_bulk_update}()},
-\code{\link{docs_bulk}()}
+\code{\link{docs_bulk}}
 }
-\concept{bulk-functions}

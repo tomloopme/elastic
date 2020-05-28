@@ -4,34 +4,16 @@
 \alias{termvectors}
 \title{Termvectors}
 \usage{
-termvectors(
-  conn,
-  index,
-  type = NULL,
-  id = NULL,
-  body = list(),
-  pretty = TRUE,
-  field_statistics = TRUE,
-  fields = NULL,
-  offsets = TRUE,
-  parent = NULL,
-  payloads = TRUE,
-  positions = TRUE,
-  realtime = TRUE,
-  preference = "random",
-  routing = NULL,
-  term_statistics = FALSE,
-  version = NULL,
-  version_type = NULL,
-  ...
-)
+termvectors(index, type, id = NULL, body = list(), pretty = TRUE,
+  field_statistics = TRUE, fields = NULL, offsets = TRUE, parent = NULL,
+  payloads = TRUE, positions = TRUE, realtime = TRUE,
+  preference = "random", routing = NULL, term_statistics = FALSE,
+  version = NULL, version_type = NULL, ...)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{index}{(character) The index in which the document resides.}
 
-\item{type}{(character) The type of the document. optional}
+\item{type}{(character) The type of the document.}
 
 \item{id}{(character) The id of the document, when not specified a doc
 param should be supplied.}
@@ -74,7 +56,7 @@ document frequency should be returned. Default: \code{FALSE}}
 \item{version_type}{(character) Specific version type, valid choices are:
 'internal', 'external', 'external_gte', 'force'}
 
-\item{...}{Curl args passed on to \link[crul:verb-POST]{crul::verb-POST}}
+\item{...}{Curl args passed on to \code{\link[httr]{POST}}}
 }
 \description{
 Termvectors
@@ -88,18 +70,14 @@ vectors are not available until the next refresh.
 }
 \examples{
 \dontrun{
-x <- connect()
-
-if (!index_exists(x, 'plos')) {
-  plosdat <- system.file("examples", "plos_data.json",
-    package = "elastic")
-  plosdat <- type_remover(plosdat)
-  invisible(docs_bulk(x, plosdat))
+connect()
+if (!index_exists('plos')) {
+  plosdat <- system.file("examples", "plos_data.json", package = "elastic")
+  invisible(docs_bulk(plosdat))
 }
-if (!index_exists(x, 'omdb')) {
+if (!index_exists('omdb')) {
   omdb <- system.file("examples", "omdb.json", package = "elastic")
-  omdb <- type_remover(omdb)
-  invisible(docs_bulk(x, omdb))
+  invisible(docs_bulk(omdb))
 }
 
 body <- '{
@@ -109,7 +87,7 @@ body <- '{
   "term_statistics" : true,
   "field_statistics" : true
 }'
-termvectors(x, 'plos', id = 29, body = body)
+termvectors('plos', 'article', 29, body = body)
 
 body <- '{
   "fields" : ["Plot"],
@@ -118,13 +96,9 @@ body <- '{
   "term_statistics" : true,
   "field_statistics" : true
 }'
-termvectors(x, 'omdb', id = Search(x, "omdb", size=1)$hits$hits[[1]]$`_id`,
-body = body)
+termvectors('omdb', 'omdb', 'AVXdx8Eqg_0Z_tpMDyP_', body = body)
 }
 }
 \references{
 \url{http://www.elastic.co/guide/en/elasticsearch/reference/current/docs-termvectors.html}
-}
-\seealso{
-\code{\link[=mtermvectors]{mtermvectors()}}
 }

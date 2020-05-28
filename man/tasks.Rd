@@ -5,38 +5,16 @@
 \alias{tasks_cancel}
 \title{Elasticsearch tasks endpoints}
 \usage{
-tasks(
-  conn,
-  task_id = NULL,
-  nodes = NULL,
-  actions = NULL,
-  parent_task_id = NULL,
-  detailed = FALSE,
-  group_by = NULL,
-  wait_for_completion = FALSE,
-  timeout = NULL,
-  raw = FALSE,
-  ...
-)
+tasks(task_id = NULL, nodes = NULL, actions = NULL,
+  parent_task_id = NULL, detailed = FALSE, group_by = NULL,
+  wait_for_completion = FALSE, timeout = NULL, raw = FALSE, ...)
 
-tasks_cancel(
-  conn,
-  node_id = NULL,
-  task_id = NULL,
-  nodes = NULL,
-  actions = NULL,
-  parent_task_id = NULL,
-  detailed = FALSE,
-  group_by = NULL,
-  wait_for_completion = FALSE,
-  timeout = NULL,
-  raw = FALSE,
-  ...
-)
+tasks_cancel(node_id = NULL, task_id = NULL, nodes = NULL,
+  actions = NULL, parent_task_id = NULL, detailed = FALSE,
+  group_by = NULL, wait_for_completion = FALSE, timeout = NULL,
+  raw = FALSE, ...)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{task_id}{a task id}
 
 \item{nodes}{(character) The nodes}
@@ -45,19 +23,19 @@ tasks_cancel(
 
 \item{parent_task_id}{(character) A parent task ID}
 
-\item{detailed}{(character) get detailed results. Default: \code{FALSE}}
+\item{detailed}{(character) get detailed results. Default: FALSE}
 
 \item{group_by}{(character) "nodes" (default, i.e., NULL) or "parents"}
 
-\item{wait_for_completion}{(logical) wait for completion. Default: \code{FALSE}}
+\item{wait_for_completion}{(logical) wait for completion. Default: FALSE}
 
 \item{timeout}{(integer) timeout time}
 
-\item{raw}{If \code{TRUE} (default), data is parsed to list. If \code{FALSE}, then
+\item{raw}{If TRUE (default), data is parsed to list. If FALSE, then
 raw JSON.}
 
-\item{...}{Curl args passed on to \link[crul:verb-GET]{crul::verb-GET} or
-\link[crul:verb-POST]{crul::verb-POST}}
+\item{...}{Curl args passed on to \code{\link[httr]{GET}} or 
+\code{\link[httr]{POST}}}
 
 \item{node_id}{a node id}
 }
@@ -66,13 +44,13 @@ Elasticsearch tasks endpoints
 }
 \examples{
 \dontrun{
-x <- connect()
+connect()
 
-tasks(x)
-# tasks(x, parent_task_id = "1234")
+tasks()
+# tasks(parent_task_id = "1234")
 
 # delete a task
-# tasks_cancel(x)
+# tasks_cancel()
 }
 }
 \references{

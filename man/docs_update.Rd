@@ -4,50 +4,31 @@
 \alias{docs_update}
 \title{Update a document}
 \usage{
-docs_update(
-  conn,
-  index,
-  id,
-  body,
-  type = NULL,
-  fields = NULL,
-  source = NULL,
-  version = NULL,
-  version_type = NULL,
-  routing = NULL,
-  parent = NULL,
-  timestamp = NULL,
-  ttl = NULL,
-  refresh = NULL,
-  timeout = NULL,
-  retry_on_conflict = NULL,
-  wait_for_active_shards = NULL,
-  detect_noop = NULL,
-  callopts = list(),
-  ...
-)
+docs_update(index, type, id, body, fields = NULL, source = NULL,
+  version = NULL, version_type = NULL, routing = NULL, parent = NULL,
+  timestamp = NULL, ttl = NULL, refresh = NULL, timeout = NULL,
+  retry_on_conflict = NULL, wait_for_active_shards = NULL,
+  detect_noop = NULL, callopts = list(), ...)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{index}{(character) The name of the index. Required}
 
-\item{id}{(numeric/character) The document ID. Can be numeric or character.
+\item{type}{(character) The type of the document. Required}
+
+\item{id}{(numeric/character) The document ID. Can be numeric or character. 
 Required}
 
 \item{body}{The document, either a list or json}
 
-\item{type}{(character) The type of the document. optional}
-
 \item{fields}{A comma-separated list of fields to return in the response}
 
-\item{source}{Allows to control if and how the updated source should be
-returned in the response. By default the updated source is not returned.
+\item{source}{Allows to control if and how the updated source should be 
+returned in the response. By default the updated source is not returned. 
 See \url{http://bit.ly/2efmYiE} filtering for details}
 
 \item{version}{(character) Explicit version number for concurrency control}
 
-\item{version_type}{(character) Specific version type. One of internal,
+\item{version_type}{(character) Specific version type. One of internal, 
 external, external_gte, or force}
 
 \item{routing}{(character) Specific routing value}
@@ -58,30 +39,30 @@ when for the upsert request}
 \item{timestamp}{(date) Explicit timestamp for the document}
 
 \item{ttl}{(aka \dQuote{time to live}) Expiration time for the document.
-Expired documents will be expunged automatically. The expiration date that
-will be set for a document with a provided ttl is relative to the timestamp
-of the document,  meaning it can be based on the time of indexing or on
-any time provided. The provided ttl must be strictly positive and can be
+Expired documents will be expunged automatically. The expiration date that 
+will be set for a document with a provided ttl is relative to the timestamp 
+of the document,  meaning it can be based on the time of indexing or on 
+any time provided. The provided ttl must be strictly positive and can be 
 a number (in milliseconds) or any valid time value (e.g, 86400000, 1d).}
 
 \item{refresh}{Refresh the index after performing the operation. See
 \url{http://bit.ly/2ezW9Zr} for details}
 
-\item{timeout}{(character) Explicit operation timeout, e.g,. 5m (for
+\item{timeout}{(character) Explicit operation timeout, e.g,. 5m (for 
 5 minutes)}
 
 \item{retry_on_conflict}{Specify how many times should the operation be
 retried when a conflict occurs (default: 0)}
 
-\item{wait_for_active_shards}{The number of shard copies required to be
-active before proceeding with the update operation.
+\item{wait_for_active_shards}{The number of shard copies required to be 
+active before proceeding with the update operation. 
 See \url{http://bit.ly/2fbqkZ1} for details.}
 
-\item{detect_noop}{(logical) Specifying \code{TRUE} will cause Elasticsearch
+\item{detect_noop}{(logical) Specifying \code{TRUE} will cause Elasticsearch 
 to check if there are changes and, if there aren't, turn the update request
 into a noop.}
 
-\item{callopts}{Curl options passed on to \link[crul:HttpClient]{crul::HttpClient}}
+\item{callopts}{Curl options passed on to \code{\link[httr]{POST}}}
 
 \item{...}{Further args to query DSL}
 }
@@ -90,31 +71,29 @@ Update a document
 }
 \examples{
 \dontrun{
-(x <- connect())
-if (!index_exists(x, 'plos')) {
-  plosdat <- system.file("examples", "plos_data.json",
-    package = "elastic")
-  plosdat <- type_remover(plosdat)
-  invisible(docs_bulk(x, plosdat))
+connect()
+if (!index_exists('plos')) {
+  plosdat <- system.file("examples", "plos_data.json", package = "elastic")
+  invisible(docs_bulk(plosdat))
 }
 
-docs_create(x, index='plos', id=1002,
+docs_create(index='plos', type='article', id=1002, 
   body=list(id="12345", title="New title"))
 # and the document is there now
-docs_get(x, index='plos', id=1002)
+docs_get(index='plos', type='article', id=1002) 
 # update the document
-docs_update(x, index='plos', id=1002,
+docs_update(index='plos', type='article', id=1002, 
   body = list(doc = list(title = "Even newer title again")))
 # get it again, notice changes
-docs_get(x, index='plos', id=1002)
+docs_get(index='plos', type='article', id=1002) 
 
-if (!index_exists(x, 'stuffthings')) {
-  index_create(x, "stuffthings")
+if (!index_exists('stuffthings')) {
+  index_create("stuffthings")
 }
-docs_create(x, index='stuffthings', id=1,
+docs_create(index='stuffthings', type='thing', id=1, 
   body=list(name = "foo", what = "bar"))
-docs_update(x, index='stuffthings', id=1,
-  body = list(doc = list(name = "hello", what = "bar")),
+docs_update(index='stuffthings', type='thing', id=1, 
+  body = list(doc = list(name = "hello", what = "bar")), 
   source = 'name')
 }
 }

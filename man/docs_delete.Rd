@@ -4,43 +4,31 @@
 \alias{docs_delete}
 \title{Delete a document}
 \usage{
-docs_delete(
-  conn,
-  index,
-  id,
-  type = NULL,
-  refresh = NULL,
-  routing = NULL,
-  timeout = NULL,
-  version = NULL,
-  version_type = NULL,
-  callopts = list(),
-  ...
-)
+docs_delete(index, type, id, refresh = NULL, routing = NULL,
+  timeout = NULL, version = NULL, version_type = NULL,
+  callopts = list(), ...)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{index}{(character) The name of the index. Required}
 
-\item{id}{(numeric/character) The document ID. Can be numeric or character.
-Required}
+\item{type}{(character) The type of the document. Required}
 
-\item{type}{(character) The type of the document. optional}
+\item{id}{(numeric/character) The document ID. Can be numeric or character. 
+Required}
 
 \item{refresh}{(logical) Refresh the index after performing the operation}
 
 \item{routing}{(character) Specific routing value}
 
-\item{timeout}{(character) Explicit operation timeout, e.g,. 5m (for 5
+\item{timeout}{(character) Explicit operation timeout, e.g,. 5m (for 5 
 minutes)}
 
 \item{version}{(character) Explicit version number for concurrency control}
 
-\item{version_type}{(character) Specific version type. One of internal
+\item{version_type}{(character) Specific version type. One of internal 
 or external}
 
-\item{callopts}{Curl args passed on to \link[crul:HttpClient]{crul::HttpClient}}
+\item{callopts}{Curl args passed on to \code{\link[httr]{DELETE}}}
 
 \item{...}{Further args to query DSL}
 }
@@ -49,25 +37,20 @@ Delete a document
 }
 \examples{
 \dontrun{
-(x <- connect())
-x$ping()
-
-if (!index_exists(x, "plos")) {
- plosdat <- system.file("examples", "plos_data.json",
-    package = "elastic")
- plosdat <- type_remover(plosdat)
- docs_bulk(x, plosdat)
+if (!index_exists("plos")) {
+ plosdat <- system.file("examples", "plos_data.json", package = "elastic")
+ docs_bulk(plosdat)
 }
 
 # delete a document
-if (!docs_get(x, index='plos', id=36, exists=TRUE)) {
-  docs_create(x, index='plos', id=36, 
+if (!docs_get(index='plos', type='article', id=36, exists=TRUE)) {
+  docs_create(index='plos', type='article', id=36, 
     body = list(id="12345", title="New title")
   )
 }
-docs_get(x, index='plos', id=36)
-docs_delete(x, index='plos', id=36)
-# docs_get(x, index='plos', id=36) # and the document is gone
+docs_get(index='plos', type='article', id=36)
+docs_delete(index='plos', type='article', id=36)
+# docs_get(index='plos', type='article', id=36) # and the document is gone
 }
 }
 \references{

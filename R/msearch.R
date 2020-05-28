@@ -3,39 +3,33 @@
 #' @description Performs multiple searches, defined in a file
 #'
 #' @export
-#' @param conn an Elasticsearch connection object, see [connect()]
 #' @param x (character) A file path
 #' @param raw (logical) Get raw JSON back or not.
-#' @param asdf (logical) If `TRUE`, use [jsonlite::fromJSON()]
-#' to parse JSON directly to a data.frame. If `FALSE` (Default), list 
+#' @param asdf (logical) If \code{TRUE}, use \code{\link[jsonlite]{fromJSON}} 
+#' to parse JSON directly to a data.frame. If \code{FALSE} (Default), list 
 #' output is given.
-#' @param ... Curl args passed on to [crul::verb-POST]
+#' @param ... Curl args passed on to \code{\link[httr]{POST}}
 #'
-#' @details This function behaves similarly to [docs_bulk()] - 
+#' @details This function behaves similarly to \code{\link{docs_bulk}} - 
 #' performs searches based on queries defined in a file.
-#' @seealso [Search_uri()] [Search()]
+#' @seealso \code{\link{Search_uri}} \code{\link{Search}}
 #' @examples \dontrun{
-#' x <- connect()
-#' 
+#' connect()
 #' msearch1 <- system.file("examples", "msearch_eg1.json", package = "elastic")
 #' readLines(msearch1)
-#' msearch(x, msearch1)
+#' msearch(msearch1)
 #'
-#' tf <- tempfile(fileext = ".json")
-#' cat('{"index" : "shakespeare"}', file = tf, sep = "\n")
+#' cat('{"index" : "shakespeare"}', file = "~/mysearch.json", sep = "\n")
 #' cat('{"query" : {"match_all" : {}}, "from" : 0, "size" : 5}',  sep = "\n",
-#'    file = tf, append = TRUE)
-#' readLines(tf)
-#' msearch(x, tf)
+#'    file = "~/mysearch.json", append = TRUE)
+#' msearch("~/mysearch.json")
 #' }
-msearch <- function(conn, x, raw = FALSE, asdf = FALSE, ...) {
-  is_conn(conn)
+msearch <- function(x, raw = FALSE, asdf = FALSE, ...) {
   if (!file.exists(x)) stop("file ", x, " does not exist", call. = FALSE)
-  url <- file.path(conn$make_url(), '_msearch')
-  cli <- conn$make_conn(url)
-  tt <- cli$post(body = crul::upload(x, "application/json"), encode = "json")
-  geterror(conn, tt)
-  if (conn$warn) catch_warnings(tt)
-  res <- tt$parse("UTF-8")
+  url <- paste0(make_url(es_get_auth()), '/_msearch')
+  tt <- POST(url, make_up(), es_env$headers, ..., 
+             body = upload_file(x, type = "application/json"), encode = "json")
+  geterror(tt)
+  res <- cont_utf8(tt)
   if (raw) res else jsonlite::fromJSON(res, asdf)
 }

@@ -3,43 +3,46 @@
 #' @export
 #' @name Search
 #' @template search_par
-#' @template search_extra
 #' @template search_egs
 #' @param body Query, either a list or json.
 #' @param time_scroll (character) Specify how long a consistent view of the 
 #' index should be maintained for scrolled search, e.g., "30s", "1m". See 
-#' [units-time]
+#' \code{\link{units-time}}.
 #' @param search_path (character) The path to use for searching. Default 
-#' to `_search`, but in some cases you may already have that in the base 
-#' url set using [connect()], in which case you can set this 
-#' to `NULL`
-#' @seealso  [Search_uri()] [Search_template()] [scroll()] [count()] 
-#' [validate()] [fielddata()]
+#' to \code{_search}, but in some cases you may already have that in the base 
+#' url set using \code{\link{connect}}, in which case you can set this 
+#' to \code{NULL}
+#' @seealso  \code{\link{Search_uri}} \code{\link{Search_template}} 
+#' \code{\link{scroll}} \code{\link{count}} \code{\link{validate}}
+#' \code{\link{fielddata}}
 
-Search <- function(conn, index=NULL, type=NULL, q=NULL, df=NULL, analyzer=NULL, 
+Search <- function(index=NULL, type=NULL, q=NULL, df=NULL, analyzer=NULL, 
   default_operator=NULL, explain=NULL, source=NULL, fields=NULL, sort=NULL, 
   track_scores=NULL, timeout=NULL, terminate_after=NULL, from=NULL, size=NULL, 
   search_type=NULL, lowercase_expanded_terms=NULL, analyze_wildcard=NULL, 
-  version=NULL, lenient=FALSE, body=list(), raw=FALSE, asdf=FALSE, track_total_hits = TRUE,
+  version=NULL, lenient=FALSE, body=list(), raw=FALSE, asdf=FALSE, track_total_hits='true', 
   time_scroll=NULL, search_path="_search", stream_opts=list(), ...) {
 
-  is_conn(conn)
-  tmp <- search_POST(conn, search_path, cl(index), cl(type),
+  tmp <- search_POST(search_path, cl(index), type,
     args = ec(list(df = df, analyzer = analyzer, 
-      default_operator = default_operator, explain = as_log(explain), 
+      default_operator = default_operator, explain = explain, 
       `_source` = cl(source), fields = cl(fields), sort = cl(sort), 
       track_scores = track_scores, timeout = cn(timeout), 
       terminate_after = cn(terminate_after), from = cn(from), size = cn(size), 
-      search_type = search_type, 
+      search_type = search_type, track_total_hits = track_total_hits,
       lowercase_expanded_terms = lowercase_expanded_terms, 
       analyze_wildcard = analyze_wildcard, version = as_log(version), q = q, 
-      scroll = time_scroll, lenient = as_log(lenient), track_total_hits = ck(track_total_hits))), body, raw, asdf,
+      scroll = time_scroll, lenient = as_log(lenient))), body, raw, asdf, 
     stream_opts, ...)
   if (!is.null(time_scroll)) attr(tmp, "scroll") <- time_scroll
+  # //TODO remember Search
+  if (!raw) {
+    tmp$hits$total <- tmp$hits$total$value
+  }
   return(tmp)
 }
 
-search_POST <- function(conn, path, index=NULL, type=NULL, args, body, raw, 
+search_POST <- function(path, index=NULL, type=NULL, args, body, raw, 
                         asdf, stream_opts, ...) {
   if (!inherits(raw, "logical")) {
     stop("'raw' parameter must be `TRUE` or `FALSE`", call. = FALSE)
@@ -48,29 +51,23 @@ search_POST <- function(conn, path, index=NULL, type=NULL, args, body, raw,
     stop("'asdf' parameter must be `TRUE` or `FALSE`", call. = FALSE)
   }
   
-  url <- conn$make_url()
+  conn <- es_get_auth()
+  url <- make_url(conn)
   url <- construct_url(url, path, index, type)
   url <- prune_trailing_slash(url)
   body <- check_inputs(body)
-  # track_total_hits introduced in ES >= 7.0
-  if (conn$es_ver() < 700) args$track_total_hits <- NULL
   # in ES >= v5, lenient param droppped
-  if (conn$es_ver() >= 500) args$lenient <- NULL
+  if (es_ver() >= 500) args$lenient <- NULL
   # in ES >= v5, fields param changed to stored_fields
-  if (conn$es_ver() >= 500) {
+  if (es_ver() >= 500) {
     if ("fields" %in% names(args)) {
       stop('"fields" parameter is deprecated in ES >= v5. Use "_source" in body\nSee also "fields" parameter in ?Search', call. = FALSE)
     }
   }
-  cli <- crul::HttpClient$new(url = url,
-    headers = c(conn$headers, json_type()), 
-    opts = c(conn$opts, ...),
-    auth = crul::auth(conn$user, conn$pwd)
-  )
-  tt <- cli$post(query = args, body = body)
-  geterror(conn, tt)
-  if (conn$warn) catch_warnings(tt)
-  res <- tt$parse("UTF-8")
+  tt <- POST(url, make_up(), es_env$headers, 
+             content_type_json(), ..., query = args, body = body)
+  geterror(tt)
+  res <- cont_utf8(tt)
   
   if (raw) {
     res 

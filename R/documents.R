@@ -2,13 +2,13 @@
 #'
 #' @name documents
 #' @details There are five functions to work directly with documents.
-#'
-#' - [docs_get()]
-#' - [docs_mget()]
-#' - [docs_create()]
-#' - [docs_delete()]
-#' - [docs_bulk()]
-#'
+#' \itemize{
+#'  \item \code{\link{docs_get}}
+#'  \item \code{\link{docs_mget}}
+#'  \item \code{\link{docs_create}}
+#'  \item \code{\link{docs_delete}}
+#'  \item \code{\link{docs_bulk}}
+#' }
 #' @examples \dontrun{
 #' # Get a document
 #' # docs_get(index='plos', type='article', id=1)

@@ -2,67 +2,67 @@
 #'
 #' @export
 #'
-#' @param conn an Elasticsearch connection object, see [connect()]
-#' @param x (character) For `scroll`, a single scroll id; for
-#' `scroll_clear`, one or more scroll id's
+#' @param x (character) For \code{scroll}, a single scroll id; for
+#' \code{scroll_clear}, one or more scroll id's
 #' @param time_scroll (character) Specify how long a consistent view of the
 #' index should be maintained for scrolled search, e.g., "30s", "1m".
-#' See [units-time].
-#' @param raw (logical) If `FALSE` (default), data is parsed to list.
-#' If `TRUE`, then raw JSON.
-#' @param asdf (logical) If `TRUE`, use [jsonlite::fromJSON()]
-#' to parse JSON directly to a data.frame. If `FALSE` (Default), list
+#' See \code{\link{units-time}}.
+#' @param raw (logical) If \code{FALSE} (default), data is parsed to list.
+#' If \code{TRUE}, then raw JSON.
+#' @param asdf (logical) If \code{TRUE}, use \code{\link[jsonlite]{fromJSON}}
+#' to parse JSON directly to a data.frame. If \code{FALSE} (Default), list
 #' output is given.
 #' @param stream_opts (list) A list of options passed to
-#' [jsonlite::stream_out()] - Except that you can't pass `x` as
-#' that's the data that's streamed out, and pass a file path sinstead of a
+#' \code{\link[jsonlite]{stream_out}} - Except that you can't pass \code{x} as
+#' that's the data that's streamed out, and pass a file path instead of a
 #' connection to \code{con}. \code{pagesize} param doesn't do much as
 #' that's more or less controlled by paging with ES.
-#' @param all (logical) If `TRUE` (default) then all search contexts
-#' cleared.  If `FALSE`, scroll id's must be passed to `x`
-#' @param ... Curl args passed on to [crul::verb-POST]
+#' @param all (logical) If \code{TRUE} (default) then all search contexts
+#' cleared.  If \code{FALSE}, scroll id's must be passed to \code{x}
+#' @param ... Curl args passed on to \code{\link[httr]{POST}}
 #'
-#' @seealso [Search()]
+#' @seealso \code{\link{Search}}
 #' @references
-#' <https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-scroll.html>
+#' \url{https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-scroll.html}
 #'
-#' @return `scroll()` returns a list, identical to what
-#' [Search()] returns. With attribute `scroll` that is the
-#' scroll value set via the `time_scroll` parameter
+#' @return \code{scroll()} returns a list, identical to what
+#' \code{\link{Search}} returns. With attribute \code{scroll} that is the
+#' scroll value set via the \code{time_scroll} parameter
 #'
-#' `scroll_clear()` returns a boolean (`TRUE` on success)
+#' \code{scroll_clear()} returns a boolean (\code{TRUE} on success)
 #'
 #' @section Scores:
 #' Scores will be the same for all documents that are returned from a
 #' scroll request. Dems da rules.
 #'
 #' @section Inputs:
-#' Inputs to `scroll()` can be one of:
-#'
-#' - list - This usually will be the output of [Search()], but
+#' Inputs to \code{scroll()} can be one of:
+#' \itemize{
+#'  \item list - This usually will be the output of \code{\link{Search}}, but
 #'  you could in theory make a list yourself with the appropriate elements
-#' - character - A scroll ID - this is typically the scroll id output
-#'  from a call to [Search()], accessed like \code{res$`_scroll_id`}
+#'  \item character - A scroll ID - this is typically the scroll id output
+#'  from a call to \code{\link{Search}}, accessed like \code{res$`_scroll_id`}
+#' }
 #'
-#' All other classes passed to `scroll()` will fail with message
+#' All other classes passed to \code{scroll()} will fail with message
 #'
-#' Lists passed to `scroll()` without a `_scroll_id` element will
+#' Lists passed to \code{scroll()} without a \code{_scroll_id} element will
 #' trigger an error.
 #'
-#' From lists output form [Search()] there should be an attribute
-#' ("scroll") that is the `scroll` value set in the [Search()]
+#' From lists output form \code{\link{Search}} there should be an attribute
+#' ("scroll") that is the \code{scroll} value set in the \code{\link{Search}}
 #' request - if that attribute is missing from the list, we'll attempt to
-#' use the `time_scroll` parameter value set in the 
-#' `scroll()` function call
+#' use the \code{time_scroll} parameter value set in the 
+#' \code{scroll()} function call
 #'
-#' The output of `scroll()` has the scroll time value as an attribute so
-#' the output can be passed back into `scroll()` to continue.
+#' The output of \code{scroll()} has the scroll time value as an attribute so
+#' the output can be passed back into \code{scroll()} to continue.
 #'
 #' @section Clear scroll:
 #' Search context are automatically removed when the scroll timeout has
 #' been exceeded.  Keeping scrolls open has a cost, so scrolls should be
 #' explicitly cleared as soon  as the scroll is not being used anymore
-#' using `scroll_clear`
+#' using \code{scroll_clear}
 #'
 #' @section Sliced scrolling:
 #' For scroll queries that return a lot of documents it is possible to split
@@ -75,63 +75,59 @@
 #' will contain the aggregations results.
 #'
 #' @examples \dontrun{
-#' # connection setup
-#' (con <- connect())
-#' 
 #' # Basic usage - can use across all indices
-#' res <- Search(con, time_scroll="1m")
-#' scroll(con, res)$`_scroll_id`
+#' res <- Search(time_scroll="1m")
+#' scroll(res)$`_scroll_id`
 #'
 #' # use on a specific index - and specify a query
-#' res <- Search(con, index = 'shakespeare', q="a*", time_scroll="1m")
+#' res <- Search(index = 'shakespeare', q="a*", time_scroll="1m")
 #' res$`_scroll_id`
 #'
 #' # Setting "sort=_doc" to turn off sorting of results - faster
-#' res <- Search(con, index = 'shakespeare', q="a*", time_scroll="1m",
+#' res <- Search(index = 'shakespeare', q="a*", time_scroll="1m",
 #'   body = '{"sort": ["_doc"]}')
 #' res$`_scroll_id`
 #'
 #' # Pass scroll_id to scroll function
-#' scroll(con, res$`_scroll_id`)
+#' scroll(res$`_scroll_id`)
 #'
 #' # Get all results - one approach is to use a while loop
-#' res <- Search(con, index = 'shakespeare', q="a*", time_scroll="5m",
+#' res <- Search(index = 'shakespeare', q="a*", time_scroll="5m",
 #'   body = '{"sort": ["_doc"]}')
-#' out <- res$hits$hits
+#' out <- list()
 #' hits <- 1
 #' while(hits != 0){
-#'   res <- scroll(con, res$`_scroll_id`, time_scroll="5m")
+#'   res <- scroll(res$`_scroll_id`)
 #'   hits <- length(res$hits$hits)
 #'   if(hits > 0)
 #'     out <- c(out, res$hits$hits)
 #' }
 #' length(out)
-#' res$hits$total
 #' out[[1]]
 #'
 #' # clear scroll
 #' ## individual scroll id
-#' res <- Search(con, index = 'shakespeare', q="a*", time_scroll="5m",
+#' res <- Search(index = 'shakespeare', q="a*", time_scroll="5m",
 #'   body = '{"sort": ["_doc"]}')
-#' scroll_clear(con, res$`_scroll_id`)
+#' scroll_clear(res$`_scroll_id`)
 #'
 #' ## many scroll ids
-#' res1 <- Search(con, index = 'shakespeare', q="c*", time_scroll="5m",
+#' res1 <- Search(index = 'shakespeare', q="c*", time_scroll="5m",
 #'   body = '{"sort": ["_doc"]}')
-#' res2 <- Search(con, index = 'shakespeare', q="d*", time_scroll="5m",
+#' res2 <- Search(index = 'shakespeare', q="d*", time_scroll="5m",
 #'   body = '{"sort": ["_doc"]}')
-#' nodes_stats(con, metric = "indices")$nodes[[1]]$indices$search$open_contexts
-#' scroll_clear(con, c(res1$`_scroll_id`, res2$`_scroll_id`))
-#' nodes_stats(con, metric = "indices")$nodes[[1]]$indices$search$open_contexts
+#' nodes_stats(metric = "indices")$nodes[[1]]$indices$search$open_contexts
+#' scroll_clear(c(res1$`_scroll_id`, res2$`_scroll_id`))
+#' nodes_stats(metric = "indices")$nodes[[1]]$indices$search$open_contexts
 #'
 #' ## all scroll ids
-#' res1 <- Search(con, index = 'shakespeare', q="f*", time_scroll="1m",
+#' res1 <- Search(index = 'shakespeare', q="f*", time_scroll="1m",
 #'   body = '{"sort": ["_doc"]}')
-#' res2 <- Search(con, index = 'shakespeare', q="g*", time_scroll="1m",
+#' res2 <- Search(index = 'shakespeare', q="g*", time_scroll="1m",
 #'   body = '{"sort": ["_doc"]}')
-#' res3 <- Search(con, index = 'shakespeare', q="k*", time_scroll="1m",
+#' res3 <- Search(index = 'shakespeare', q="k*", time_scroll="1m",
 #'   body = '{"sort": ["_doc"]}')
-#' scroll_clear(con, all = TRUE)
+#' scroll_clear(all = TRUE)
 #'
 #' ## sliced scrolling
 #' body1 <- '{
@@ -158,15 +154,15 @@
 #'   }
 #' }'
 #'
-#' res1 <- Search(con, index = 'shakespeare', time_scroll="1m", body = body1)
-#' res2 <- Search(con, index = 'shakespeare', time_scroll="1m", body = body2)
-#' scroll(con, res1$`_scroll_id`)
-#' scroll(con, res2$`_scroll_id`)
+#' res1 <- Search(index = 'shakespeare', time_scroll="1m", body = body1)
+#' res2 <- Search(index = 'shakespeare', time_scroll="1m", body = body2)
+#' scroll(res1$`_scroll_id`)
+#' scroll(res2$`_scroll_id`)
 #'
 #' out1 <- list()
 #' hits <- 1
 #' while(hits != 0){
-#'   tmp1 <- scroll(con, res1$`_scroll_id`)
+#'   tmp1 <- scroll(res1$`_scroll_id`)
 #'   hits <- length(tmp1$hits$hits)
 #'   if(hits > 0)
 #'     out1 <- c(out1, tmp1$hits$hits)
@@ -175,7 +171,7 @@
 #' out2 <- list()
 #' hits <- 1
 #' while(hits != 0){
-#'   tmp2 <- scroll(con, res2$`_scroll_id`)
+#'   tmp2 <- scroll(res2$`_scroll_id`)
 #'   hits <- length(tmp2$hits$hits)
 #'   if(hits > 0)
 #'     out2 <- c(out2, tmp2$hits$hits)
@@ -188,9 +184,10 @@
 #'
 #'
 #' # using jsonlite::stream_out
-#' res <- Search(con, time_scroll = "1m")
+#' connect()
+#' res <- Search(time_scroll = "1m")
 #' file <- tempfile()
-#' scroll(con, 
+#' scroll(
 #'   x = res$`_scroll_id`,
 #'   stream_opts = list(file = file)
 #' )
@@ -198,12 +195,12 @@
 #' unlink(file)
 #'
 #' ## stream_out and while loop
+#' connect()
 #' (file <- tempfile())
-#' res <- Search(con, index = "shakespeare", time_scroll = "5m",
+#' res <- Search(index = "shakespeare", time_scroll = "5m",
 #'   size = 1000, stream_opts = list(file = file))
 #' while(!inherits(res, "warning")) {
 #'   res <- tryCatch(scroll(
-#'     conn = con,
 #'     x = res$`_scroll_id`,
 #'     time_scroll = "5m",
 #'     stream_opts = list(file = file)
@@ -212,21 +209,20 @@
 #' NROW(df <- jsonlite::stream_in(file(file)))
 #' head(df)
 #' }
-scroll <- function(conn, x, time_scroll = "1m", raw = FALSE, asdf = FALSE,
+scroll <- function(x, time_scroll = "1m", raw = FALSE, asdf = FALSE,
                    stream_opts = list(), ...) {
-  UseMethod("scroll", x)
+  UseMethod("scroll")
 }
 
 #' @export
-scroll.default <- function(conn, x, time_scroll = "1m", raw = FALSE, asdf = FALSE,
+scroll.default <- function(x, time_scroll = "1m", raw = FALSE, asdf = FALSE,
                            stream_opts = list(), ...) {
   stop("no 'scroll()' method for ", class(x), call. = FALSE)
 }
 
 #' @export
-scroll.list <- function(conn, x, time_scroll = "1m", raw = FALSE, asdf = FALSE,
+scroll.list <- function(x, time_scroll = "1m", raw = FALSE, asdf = FALSE,
                         stream_opts = list(), force_scroll = FALSE, ...) {
-  is_conn(conn)
   scroll_ <- NULL
   if (!is.null(x$`_scroll_id`)) {
     scroll_ <- attr(x, "scroll")
@@ -239,20 +235,19 @@ scroll.list <- function(conn, x, time_scroll = "1m", raw = FALSE, asdf = FALSE,
     scroll_ <- time_scroll
   }
   if (force_scroll) scroll_ <- time_scroll
-  scroll(conn, x$`_scroll_id`, time_scroll = scroll_, raw = raw,
+  scroll(x$`_scroll_id`, time_scroll = scroll_, raw = raw,
                    asdf = asdf, stream_opts = stream_opts, ...)
 }
 
 #' @export
-scroll.character <- function(conn, x, time_scroll = "1m", raw = FALSE, asdf = FALSE,
+scroll.character <- function(x, time_scroll = "1m", raw = FALSE, asdf = FALSE,
                              stream_opts = list(), ...) {
 
-  is_conn(conn)
   calls <- names(list(...))
   if ("scroll" %in% calls) {
     stop("The parameter `scroll` has been removed - use `time_scroll`")
   }
-  if (conn$es_ver() < 200) {
+  if (es_ver() < 200) {
     body <- x
     args <- list(scroll = time_scroll)
   } else {
@@ -260,7 +255,6 @@ scroll.character <- function(conn, x, time_scroll = "1m", raw = FALSE, asdf = FA
     args <- list()
   }
   tmp <- scroll_POST(
-    conn = conn,
     path = "_search/scroll",
     args = args,
     body = body,
@@ -273,8 +267,7 @@ scroll.character <- function(conn, x, time_scroll = "1m", raw = FALSE, asdf = FA
 
 #' @export
 #' @rdname scroll
-scroll_clear <- function(conn, x = NULL, all = FALSE, ...) {
-  is_conn(conn)
+scroll_clear <- function(x = NULL, all = FALSE, ...) {
   if (all) {
     path <- "_search/scroll/_all"
     body <- NULL
@@ -284,5 +277,5 @@ scroll_clear <- function(conn, x = NULL, all = FALSE, ...) {
     path <- "_search/scroll"
     body <- list(scroll_id = x)
   }
-  scroll_DELETE(conn, path, body = body, ...)
+  scroll_DELETE(path, body = body, ...)
 }

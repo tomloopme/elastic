@@ -8,25 +8,23 @@
 \alias{Search_template_render}
 \title{Search or validate templates}
 \usage{
-Search_template(conn, body = list(), raw = FALSE, ...)
+Search_template(body = list(), raw = FALSE, ...)
 
-Search_template_register(conn, template, body = list(), raw = FALSE, ...)
+Search_template_register(template, body = list(), raw = FALSE, ...)
 
-Search_template_get(conn, template, ...)
+Search_template_get(template, ...)
 
-Search_template_delete(conn, template, ...)
+Search_template_delete(template, ...)
 
-Search_template_render(conn, body = list(), raw = FALSE, ...)
+Search_template_render(body = list(), raw = FALSE, ...)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{body}{Query, either a list or json.}
 
 \item{raw}{(logical) If \code{FALSE} (default), data is parsed to list.
 If \code{TRUE}, then raw JSON returned}
 
-\item{...}{Curl args passed on to \link[crul:verb-POST]{crul::verb-POST}}
+\item{...}{Curl args passed on to \code{\link[httr]{POST}}}
 
 \item{template}{(character) a template name}
 }
@@ -47,24 +45,21 @@ conducting the search. Added in Elasticsearch v2.0
 
 \section{Pre-registered templates}{
 
-Register a template with \code{Search_template_register}. You can get
-the template with \code{Search_template_get} and delete the template
+Register a template with \code{Search_template_register}. You can get 
+the template with \code{Search_template_get} and delete the template 
 with \code{Search_template_delete}
 
-You can also pre-register search templates by storing them in the
-\code{config/scripts} directory, in a file using the .mustache
-extension. In order to execute the stored template, reference it
-by it's name under the template key, like
-\verb{"file": "templateName", ...}
+You can also pre-register search templates by storing them in the 
+\code{config/scripts} directory, in a file using the .mustache 
+extension. In order to execute the stored template, reference it 
+by it's name under the template key, like 
+\code{"file": "templateName", ...}
 }
 
 \examples{
 \dontrun{
-# connection setup
-(x <- connect())
-
-if (!index_exists(x, "iris")) {
-  invisible(docs_bulk(x, iris, "iris"))
+if (!index_exists("iris")) {
+  invisible(docs_bulk(iris, "iris"))
 }
 
 body1 <- '{
@@ -78,7 +73,7 @@ body1 <- '{
     "my_size" : 3
   }
 }'
-Search_template(x, body = body1)
+Search_template(body = body1)
 
 body2 <- '{
  "inline": {
@@ -92,50 +87,34 @@ body2 <- '{
    "query_string": "versicolor"
  }
 }'
-Search_template(x, body = body2)
+Search_template(body = body2)
 
 # pass in a list
 mylist <- list(
   inline = list(query = list(match = list(`{{my_field}}` = "{{my_value}}"))),
   params = list(my_field = "Species", my_value = "setosa", my_size = 3L)
 )
-Search_template(x, body = mylist)
+Search_template(body = mylist)
 
 ## Validating templates w/ Search_template_render()
-Search_template_render(x, body = body1)
-Search_template_render(x, body = body2)
+Search_template_render(body = body1)
+Search_template_render(body = body2)
 
 ## pre-registered templates
 ### register a template
-if (x$es_ver() <= 520) {
-  body3 <- '{
-    "template": {
-       "query": {
-           "match": {
-               "Species": "{{query_string}}"
-           }
-       }
-     }
-  }'
-  Search_template_register(x, 'foobar', body = body3)
-} else {
-  body3 <- '{
-   "script": {
-     "lang": "mustache",
-       "source": {
-         "query": {
-           "match": {
+body3 <- '{
+  "template": {
+     "query": {
+         "match": {
              "Species": "{{query_string}}"
-           }
          }
-       }
      }
-  }'
-  Search_template_register(x, 'foobar', body = body3)
-}
+   }
+}'
+Search_template_register('foobar', body = body3)
 
 ### get template
-Search_template_get(x, 'foobar')
+Search_template_get('foobar')
 
 ### use the template
 body4 <- '{
@@ -144,15 +123,15 @@ body4 <- '{
       "query_string": "setosa"
   }
 }'
-Search_template(x, body = body4)
+Search_template(body = body4)
 
 ### delete the template
-Search_template_delete(x, 'foobar')
+Search_template_delete('foobar')
 }
 }
 \references{
 \url{https://www.elastic.co/guide/en/elasticsearch/reference/current/search-template.html}
 }
 \seealso{
-\code{\link[=Search]{Search()}}, \code{\link[=Search_uri]{Search_uri()}}
+\code{\link{Search}}, \code{\link{Search_uri}}
 }

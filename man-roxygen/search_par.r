@@ -1,8 +1,5 @@
-#' @param conn an Elasticsearch connection object, see \code{\link{connect}}
 #' @param index Index name, one or more
-#' @param type Document type. Note that \code{type} is deprecated in 
-#' Elasticsearch v7 and greater, and removed in Elasticsearch v8. We will
-#' strive to support types for folks using older ES versions
+#' @param type Document type
 #' @param q The query string (maps to the query_string query, see Query String 
 #' Query for more details). See 
 #'https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html
@@ -59,13 +56,9 @@
 #' @param analyze_wildcard (logical) Should wildcard and prefix queries be 
 #' analyzed or not. Default: \code{FALSE}.
 #' @param version (logical) Print the document version with each document.
-#' @param lenient (logical) If \code{TRUE} will cause format based failures (like 
+#' @param lenient If \code{TRUE} will cause format based failures (like 
 #' providing text to a numeric field) to be ignored. Default: \code{FALSE}
-#' @param track_total_hits (logical, numeric) If \code{TRUE} will always track 
-#' the number of hits that match the query accurately. If \code{FALSE} will 
-#' count documents accurately up to 10000 documents. If \code{is.integer} will 
-#' count documents accurately up to the number. Default: \code{TRUE}
-#' @param raw (logical) If \code{FALSE} (default), data is parsed to list.
+#' @param raw (logical) If \code{FALSE} (default), data is parsed to list. 
 #' If \code{TRUE}, then raw JSON returned
 #' @param asdf (logical) If \code{TRUE}, use \code{\link[jsonlite]{fromJSON}} 
 #' to parse JSON directly to a data.frame. If \code{FALSE} (Default), list 
@@ -75,4 +68,4 @@
 #' that's the data that's streamed out, and pass a file path instead of a 
 #' connection to \code{con}. \code{pagesize} param doesn't do much as 
 #' that's more or less controlled by paging with ES.
-#' @param ... Curl args passed on to \code{\link[crul]{verb-POST}}
+#' @param ... Curl args passed on to \code{\link[httr]{POST}}

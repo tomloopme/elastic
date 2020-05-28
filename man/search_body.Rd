@@ -4,31 +4,22 @@
 \alias{search_body}
 \title{Full text search of Elasticsearch - body requests.}
 \usage{
-search_body(
-  conn,
-  index = NULL,
-  type = NULL,
-  raw = FALSE,
-  callopts = list(),
-  query = list(),
-  ...
-)
+search_body(index = NULL, type = NULL, raw = FALSE, callopts = list(),
+  query = list(), ...)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{index}{Index name}
 
 \item{type}{Document type}
 
-\item{raw}{If \code{TRUE} (default), data is parsed to list. If \code{FALSE}, then
+\item{raw}{If TRUE (default), data is parsed to list. If \code{FALSE}, then 
 raw JSON.}
 
-\item{callopts}{Curl args passed on to \link[crul:verb-POST]{crul::verb-POST}}
+\item{callopts}{Curl args passed on to \code{httr::POST}}
 
 \item{query}{Query, either a list or json.}
 
-\item{...}{Further args passed on to elastic search HTTP API as parameters.
+\item{...}{Further args passed on to elastic search HTTP API as parameters. 
 Not used right now.}
 }
 \description{
@@ -36,13 +27,9 @@ Full text search of Elasticsearch - body requests.
 }
 \examples{
 \dontrun{
-# connection setup
-# x <- connect()
-# x$ping()
-
 # pass in as an R list
-aggs <- list(aggs = list(stats = list(terms = list(field = "text_entry"))))
-# search_body(x, index="shakespeare", query=aggs)
+# aggs <- list(aggs = list(stats = list(terms = list(field = "text_entry"))))
+# search_body(index="shakespeare", query=aggs)
 
 # or pass in as json query with newlines, easy to read
 aggs <- '{
@@ -54,21 +41,21 @@ aggs <- '{
         }
     }
 }'
-# search_body(x, index="shakespeare", query=aggs)
+# search_body(index="shakespeare", query=aggs)
 
 
 # or pass in collapsed json string
 aggs <- '{"aggs":{"stats":{"terms":{"field":"text_entry"}}}}'
-# search_body(x, index="shakespeare", query=aggs)
+# search_body(index="shakespeare", query=aggs)
 
 # match query
 match <- '{"query": {"match" : {"text_entry" : "Two Gentlemen"}}}'
-# search_body(x, index="shakespeare", query=match)
+# search_body(index="shakespeare", query=match)
 
 # multi-match (multiple fields that is) query
 mmatch <- '{"query": {"multi_match" : {"query" : "henry", "fields": 
 ["text_entry","play_name"]}}}'
-# search_body(x, index="shakespeare", query=mmatch)
+# search_body(index="shakespeare", query=mmatch)
 
 # bool query
 mmatch <- '{
@@ -79,7 +66,7 @@ mmatch <- '{
          "speech_number" : {
            "from" : 1, "to": 5
 }}}}}}'
-# search_body(x, index="shakespeare", query=mmatch)
+# search_body(index="shakespeare", query=mmatch)
 
 # Boosting query
 boost <- '{
@@ -99,7 +86,7 @@ boost <- '{
     }
  }
 }'
-# search_body(x, index="shakespeare", query=mmatch)
+# search_body(index="shakespeare", query=mmatch)
 }
 }
 \keyword{internal}

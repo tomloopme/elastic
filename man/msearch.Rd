@@ -4,44 +4,39 @@
 \alias{msearch}
 \title{Multi-search}
 \usage{
-msearch(conn, x, raw = FALSE, asdf = FALSE, ...)
+msearch(x, raw = FALSE, asdf = FALSE, ...)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{x}{(character) A file path}
 
 \item{raw}{(logical) Get raw JSON back or not.}
 
-\item{asdf}{(logical) If \code{TRUE}, use \code{\link[jsonlite:fromJSON]{jsonlite::fromJSON()}}
-to parse JSON directly to a data.frame. If \code{FALSE} (Default), list
+\item{asdf}{(logical) If \code{TRUE}, use \code{\link[jsonlite]{fromJSON}} 
+to parse JSON directly to a data.frame. If \code{FALSE} (Default), list 
 output is given.}
 
-\item{...}{Curl args passed on to \link[crul:verb-POST]{crul::verb-POST}}
+\item{...}{Curl args passed on to \code{\link[httr]{POST}}}
 }
 \description{
 Performs multiple searches, defined in a file
 }
 \details{
-This function behaves similarly to \code{\link[=docs_bulk]{docs_bulk()}} -
+This function behaves similarly to \code{\link{docs_bulk}} - 
 performs searches based on queries defined in a file.
 }
 \examples{
 \dontrun{
-x <- connect()
-
+connect()
 msearch1 <- system.file("examples", "msearch_eg1.json", package = "elastic")
 readLines(msearch1)
-msearch(x, msearch1)
+msearch(msearch1)
 
-tf <- tempfile(fileext = ".json")
-cat('{"index" : "shakespeare"}', file = tf, sep = "\n")
-cat('{"query" : {"match_all" : {}}, "from" : 0, "size" : 5}',  sep = "\n",
-   file = tf, append = TRUE)
-readLines(tf)
-msearch(x, tf)
+cat('{"index" : "shakespeare"}', file = "~/mysearch.json", sep = "\\n")
+cat('{"query" : {"match_all" : {}}, "from" : 0, "size" : 5}',  sep = "\\n",
+   file = "~/mysearch.json", append = TRUE)
+msearch("~/mysearch.json")
 }
 }
 \seealso{
-\code{\link[=Search_uri]{Search_uri()}} \code{\link[=Search]{Search()}}
+\code{\link{Search_uri}} \code{\link{Search}}
 }

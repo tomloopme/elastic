@@ -1,9 +1,13 @@
 context("mtermvectors")
 
-x <- connect(warn = FALSE)
-load_omdb(x)
+invisible(connect())
 
-ids <- vapply(Search(x, "omdb", size = 2)$hits$hits, "[[", "", "_id")
+if (!index_exists('omdb')) {
+  omdb <- system.file("examples", "omdb.json", package = "elastic")
+  invisible(docs_bulk(omdb))
+}
+
+ids <- vapply(Search("omdb", size = 2)$hits$hits, "[[", "", "_id")
 body <- sprintf('{
        "ids" : ["%s", "%s"],
        "parameters": {
@@ -16,9 +20,9 @@ body <- sprintf('{
 
 test_that("mtermvectors works", {
   skip_on_travis()
-  if (gsub("\\.", "", x$ping()$version$number) < 130) skip('feature not in this ES version')
+  if (gsub("\\.", "", ping()$version$number) < 130) skip('feature not in this ES version')
 
-  aa <- mtermvectors(x, 'omdb', 'omdb', body = body)
+  aa <- mtermvectors('omdb', 'omdb', body = body)
 
   expect_is(aa, 'list')
   expect_named(aa, 'docs')
@@ -39,9 +43,6 @@ test_that("mtermvectors works", {
 test_that("mtermvectors fails well", {
   skip_on_travis()
 
-  expect_error(mtermvectors(x, body = body), "index is missing")
-
-  if (es_version(x) < 700) {
-    expect_error(mtermvectors(x, "omdb", body = body), "type is missing")
-  }
+  expect_error(mtermvectors(body = body), "index is missing")
+  expect_error(mtermvectors("omdb", body = body), "type is missing")
 })

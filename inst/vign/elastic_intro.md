@@ -42,18 +42,18 @@ library("elastic")
 
 ## Install Elasticsearch
 
-* [Elasticsearch installation help](https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html)
+* [Elasticsearch installation help](http://www.elastic.co/guide/en/elasticsearch/reference/current/_installation.html)
 
 __Unix (linux/osx)__
 
-Replace `6.5.3` with the version you are working with.
+Replace `5.6.3` with the version you are working with.
 
-+ Download zip or tar file from Elasticsearch [see here for download](https://www.elastic.co/downloads), e.g., `curl -L -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.5.3.tar.gz`
-+ Extract: `tar -zxvf elasticsearch-6.5.3.tar.gz`
-+ Move it: `sudo mv elasticsearch-6.5.3 /usr/local`
++ Download zip or tar file from Elasticsearch [see here for download](https://www.elastic.co/downloads), e.g., `curl -L -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.3.tar.gz`
++ Extract: `tar -zxvf elasticsearch-5.6.3.tar.gz`
++ Move it: `sudo mv elasticsearch-5.6.3 /usr/local`
 + Navigate to /usr/local: `cd /usr/local`
 + Delete symlinked `elasticsearch` directory: `rm -rf elasticsearch`
-+ Add shortcut: `sudo ln -s elasticsearch-6.5.3 elasticsearch` (replace version with your version)
++ Add shortcut: `sudo ln -s elasticsearch-5.6.3 elasticsearch` (replace version with your version)
 
 On OSX, you can install via Homebrew: `brew install elasticsearch`
 
@@ -76,21 +76,18 @@ The function `connect()` is used before doing anything else to set the connectio
 
 
 ```r
-x <- connect()
-x
+connect()
 ```
 
 ```
-#> <Elasticsearch Connection> 
-#>   transport:  http 
-#>   host:       127.0.0.1 
-#>   port:       9200 
-#>   path:       NULL 
-#>   username:   NULL 
-#>   password:   NULL 
-#>   errors:     simple 
-#>   headers (names):   
-#>   cainfo:  NULL
+#> transport:  http 
+#> host:       127.0.0.1 
+#> port:       9200 
+#> path:       NULL 
+#> username:   NULL 
+#> password:   <secret> 
+#> errors:     simple 
+#> headers (names):  NULL
 ```
 
 On package load, your base url and port are set to `http://127.0.0.1` and `9200`, respectively. You can of course override these settings per session or for all sessions.
@@ -114,7 +111,7 @@ Then load the data into Elasticsearch:
 
 
 ```r
-docs_bulk(x, shakespeare)
+docs_bulk(shakespeare)
 ```
 
 If you need some big data to play with, the shakespeare dataset is a good one to start with. You can get the whole thing and pop it into Elasticsearch (beware, may take up to 10 minutes or so.):
@@ -131,7 +128,7 @@ A dataset inluded in the `elastic` package is metadata for PLOS scholarly articl
 
 ```r
 plosdat <- system.file("examples", "plos_data.json", package = "elastic")
-docs_bulk(x, plosdat)
+docs_bulk(plosdat)
 ```
 
 ### Global Biodiversity Information Facility (GBIF) data
@@ -141,7 +138,7 @@ A dataset inluded in the `elastic` package is data for GBIF species occurrence r
 
 ```r
 gbifdat <- system.file("examples", "gbif_data.json", package = "elastic")
-docs_bulk(x, gbifdat)
+docs_bulk(gbifdat)
 ```
 
 GBIF geo data with a coordinates element to allow `geo_shape` queries
@@ -149,7 +146,7 @@ GBIF geo data with a coordinates element to allow `geo_shape` queries
 
 ```r
 gbifgeo <- system.file("examples", "gbif_geo.json", package = "elastic")
-docs_bulk(x, gbifgeo)
+docs_bulk(gbifgeo)
 ```
 
 ### More data sets
@@ -162,7 +159,7 @@ Search the `plos` index and only return 1 result
 
 
 ```r
-Search(x, index="plos", size=1)$hits$hits
+Search(index="plos", size=1)$hits$hits
 ```
 
 ```
@@ -191,7 +188,7 @@ Search the `plos` index, and the `article` document type, and query for _antibod
 
 
 ```r
-Search(x, index="plos", type="article", q="antibody", size=1)$hits$hits
+Search(index="plos", type="article", q="antibody", size=1)$hits$hits
 ```
 
 ```
@@ -203,17 +200,17 @@ Search(x, index="plos", type="article", q="antibody", size=1)$hits$hits
 #> [1] "article"
 #> 
 #> [[1]]$`_id`
-#> [1] "216"
+#> [1] "568"
 #> 
 #> [[1]]$`_score`
-#> [1] 4.423327
+#> [1] 4.165291
 #> 
 #> [[1]]$`_source`
 #> [[1]]$`_source`$id
-#> [1] "10.1371/journal.pone.0107664"
+#> [1] "10.1371/journal.pone.0085002"
 #> 
 #> [[1]]$`_source`$title
-#> [1] "Antibody-Validated Proteins in Inflamed Islets of Fulminant Type 1 Diabetes Profiled by Laser-Capture Microdissection Followed by Mass Spectrometry"
+#> [1] "Evaluation of 131I-Anti-Angiotensin II Type 1 Receptor Monoclonal Antibody as a Reporter for Hepatocellular Carcinoma"
 ```
 
 ## Get documents
@@ -222,7 +219,7 @@ Get document with `id=1`
 
 
 ```r
-docs_get(x, index='plos', type='article', id=1)
+docs_get(index='plos', type='article', id=1)
 ```
 
 ```
@@ -253,7 +250,7 @@ Get certain fields
 
 
 ```r
-docs_get(x, index='plos', type='article', id=1, fields='id')
+docs_get(index='plos', type='article', id=1, fields='id')
 ```
 
 ```
@@ -279,7 +276,7 @@ Same index and type, different document ids
 
 
 ```r
-docs_mget(x, index="plos", type="article", id=3:4)
+docs_mget(index="plos", type="article", id=3:4)
 ```
 
 ```
@@ -337,7 +334,7 @@ Different indeces, types, and ids
 
 
 ```r
-docs_mget(x, index_type_id=list(c("plos","article",1), c("gbif","record",1)))$docs[[1]]
+docs_mget(index_type_id=list(c("plos","article",1), c("gbif","record",1)))$docs[[1]]
 ```
 
 ```
@@ -372,7 +369,7 @@ For example:
 
 
 ```r
-(out <- docs_mget(x, index="plos", type="article", id=5:6, raw=TRUE))
+(out <- docs_mget(index="plos", type="article", id=5:6, raw=TRUE))
 ```
 
 ```

@@ -4,44 +4,26 @@
 \alias{mtermvectors}
 \title{Multi Termvectors}
 \usage{
-mtermvectors(
-  conn,
-  index = NULL,
-  type = NULL,
-  ids = NULL,
-  body = list(),
-  pretty = TRUE,
-  field_statistics = TRUE,
-  fields = NULL,
-  offsets = TRUE,
-  parent = NULL,
-  payloads = TRUE,
-  positions = TRUE,
-  preference = "random",
-  realtime = TRUE,
-  routing = NULL,
-  term_statistics = FALSE,
-  version = NULL,
-  version_type = NULL,
-  ...
-)
+mtermvectors(index = NULL, type = NULL, ids = NULL, body = list(),
+  pretty = TRUE, field_statistics = TRUE, fields = NULL, offsets = TRUE,
+  parent = NULL, payloads = TRUE, positions = TRUE,
+  preference = "random", realtime = TRUE, routing = NULL,
+  term_statistics = FALSE, version = NULL, version_type = NULL, ...)
 }
 \arguments{
-\item{conn}{an Elasticsearch connection object, see \code{\link[=connect]{connect()}}}
-
 \item{index}{(character) The index in which the document resides.}
 
 \item{type}{(character) The type of the document.}
 
 \item{ids}{(character) One or more document ids}
 
-\item{body}{(character) Define parameters and or supply a document to get
+\item{body}{(character) Define parameters and or supply a document to get 
 termvectors for}
 
 \item{pretty}{(logical) pretty print. Default: \code{TRUE}}
 
-\item{field_statistics}{(character) Specifies if document count, sum of
-document frequencies and sum of total term frequencies should be returned.
+\item{field_statistics}{(character) Specifies if document count, sum of 
+document frequencies and sum of total term frequencies should be returned. 
 Default: \code{TRUE}}
 
 \item{fields}{(character) A comma-separated list of fields to return.}
@@ -57,7 +39,7 @@ Default: \code{TRUE}}
 \item{positions}{(character) Specifies if term positions should be returned.
 Default: \code{TRUE}}
 
-\item{preference}{(character) Specify the node or shard the operation
+\item{preference}{(character) Specify the node or shard the operation 
 should be performed on (Default: \code{random}).}
 
 \item{realtime}{(character) Specifies if request is real-time as opposed to
@@ -65,76 +47,94 @@ near-real-time (Default: \code{TRUE}).}
 
 \item{routing}{(character) Specific routing value.}
 
-\item{term_statistics}{(character) Specifies if total term frequency and
+\item{term_statistics}{(character) Specifies if total term frequency and 
 document frequency should be returned. Default: \code{FALSE}}
 
 \item{version}{(character) Explicit version number for concurrency control}
 
-\item{version_type}{(character) Specific version type, valid choices are:
+\item{version_type}{(character) Specific version type, valid choices are: 
 'internal', 'external', 'external_gte', 'force'}
 
-\item{...}{Curl args passed on to \link[crul:verb-POST]{crul::verb-POST}}
+\item{...}{Curl args passed on to \code{\link[httr]{POST}}}
 }
 \description{
 Multi Termvectors
 }
 \details{
-Multi termvectors API allows to get multiple termvectors based on an
+Multi termvectors API allows to get multiple termvectors based on an 
 index, type and id.
 }
 \examples{
 \dontrun{
-x <- connect()
+connect()
+if (!index_exists('omdb')) {
+  omdb <- system.file("examples", "omdb.json", package = "elastic")
+  docs_bulk(omdb)
+}
 
-if (index_exists(x, 'omdb')) index_delete(x, "omdb")
-omdb <- system.file("examples", "omdb.json", package = "elastic")
-omdb <- type_remover(omdb)
-invisible(docs_bulk(x, omdb))
-out <- Search(x, "omdb", size = 2)$hits$hits
-ids <- vapply(out, "[[", "", "_id")
-
-# no index
+# no index or type given
 body <- '{
    "docs": [
       {
          "_index": "omdb",
-         "_id": "\%s",
+         "_type": "omdb",
+         "_id": "AVXdx8Eqg_0Z_tpMDyP_",
          "term_statistics": true
       },
       {
          "_index": "omdb",
-         "_id": "\%s",
+         "_type": "omdb",
+         "_id": "AVXdx8Eqg_0Z_tpMDyQ1",
          "fields": [
             "Plot"
          ]
       }
    ]
 }'
-mtermvectors(x, body = sprintf(body, ids[1], ids[2]))
+mtermvectors(body = body)
 
-# index given
+# index given, but not type
 body <- '{
    "docs": [
       {
-         "_id": "\%s",
+         "_type": "omdb",
+         "_id": "AVXdx8Eqg_0Z_tpMDyP_",
          "fields": [
             "Plot"
          ],
          "term_statistics": true
       },
       {
-         "_id": "\%s",
+         "_type": "omdb",
+         "_id": "AVXdx8Eqg_0Z_tpMDyQ1",
          "fields": [
             "Title"
          ]
       }
    ]
 }'
-mtermvectors(x, 'omdb', body = sprintf(body, ids[1], ids[2]))
+mtermvectors('omdb', body = body)
 
-# parameters same for both documents, so can simplify
+# index and type given
 body <- '{
-    "ids" : ["\%s", "\%s"],
+   "docs": [
+      {
+         "_id": "AVXdx8Eqg_0Z_tpMDyP_",
+         "fields": [
+            "Plot"
+         ],
+         "term_statistics": true
+      },
+      {
+         "_id": "AVXdx8Eqg_0Z_tpMDyQ1"
+      }
+   ]
+}'
+mtermvectors('omdb', 'omdb', body = body)
+
+# index and type given, parameters same, so can simplify
+body <- '{
+    "ids" : ["AVXdx8Eqg_0Z_tpMDyP_", "AVXdx8Eqg_0Z_tpMDyQ1"],
     "parameters": {
         "fields": [
             "Plot"
@@ -142,7 +142,7 @@ body <- '{
         "term_statistics": true
     }
 }'
-mtermvectors(x, 'omdb', body = sprintf(body, ids[1], ids[2]))
+mtermvectors('omdb', 'omdb', body = body)
 
 # you can give user provided documents via the 'docs' parameter
 ## though you have to give index and type that exist in your Elasticsearch 
@@ -151,6 +151,7 @@ body <- '{
    "docs": [
       {
          "_index": "omdb",
+         "_type": "omdb",
          "doc" : {
             "Director" : "John Doe",
             "Plot" : "twitter test test test"
@@ -158,6 +159,7 @@ body <- '{
       },
       {
          "_index": "omdb",
+         "_type": "omdb",
          "doc" : {
            "Director" : "Jane Doe",
            "Plot" : "Another twitter test ..."
@@ -165,12 +167,9 @@ body <- '{
       }
    ]
 }'
-mtermvectors(x, body = body)
+mtermvectors(body = body)
 }
 }
 \references{
 \url{https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-multi-termvectors.html}
-}
-\seealso{
-\code{\link[=termvectors]{termvectors()}}
 }
